@@ -6,7 +6,8 @@ Atlas se plantea como un monolito modular sobre PostgreSQL, desplegado en conten
 
 El navegador se comunica únicamente con Nginx, que enruta las peticiones bajo `/api` hacia Flask y las demás hacia Next.js. El backend es un solo proceso dividido en ocho módulos de dominio. Cada módulo es dueño de sus tablas y solo accede a los datos de otro a través de su capa de servicio, lo que permite extraerlo como servicio independiente sin reescribirlo.
 
-![Arquitectura lógica de Atlas](docs/img/architecture.png)
+<img width="1520" height="1328" alt="architecture" src="https://github.com/user-attachments/assets/be7cab72-682a-481e-87d3-f6c8df9b5032" />
+
 
 ### 1.1 Decisiones y compromisos
 
@@ -77,7 +78,8 @@ La autorización se verifica en la capa de servicio, por rol y por propiedad: un
 
 El esquema tiene seis tablas que alimentan el prototipo y cuatro de extensión. Estas últimas almacenan información que la universidad ya registra de cada grupo en Hermes y que el MVP aún no muestra. Atlas no se conecta a Hermes: adopta su estructura como referencia y recibe las fichas por un archivo CSV que carga la Vicedecanatura.
 
-![Diagrama entidad-relación](docs/img/er-diagram.png)
+<img width="1520" height="1376" alt="er-diagram" src="https://github.com/user-attachments/assets/df29d57d-7720-45bc-814e-3776755f2274" />
+
 
 Las tablas de línea continua corresponden al MVP; las de línea punteada, a la extensión.
 
@@ -109,7 +111,8 @@ El modelo transaccional conserva solo el estado actual de cada registro, lo que 
 
 **Esquema estrella.** Un esquema `analytics`, en la misma base, expone vistas materializadas con una tabla de hechos por postulación y cuatro dimensiones. `dim_seedbed` se construye desde `change_log` como dimensión de cambio lento de tipo 2, de modo que cada postulación se analiza con los atributos que el semillero tenía en ese momento.
 
-![Esquema estrella](docs/img/star-schema.png)
+<img width="1520" height="672" alt="star-schema" src="https://github.com/user-attachments/assets/4a433f8e-b65a-4c47-9af4-78b3d35fb2d0" />
+
 
 Los indicadores del cuadro de mando se calculan sobre este esquema: crecimiento de postulaciones, tiempo de respuesta del director y postulaciones con autorización. Las vistas se refrescan cada noche y no contienen nombres ni correos. Al residir en la misma base no requieren un proceso de carga adicional; si el volumen crece, el mismo modelo se traslada a una bodega de datos.
 
@@ -162,7 +165,8 @@ La arquitectura escala por etapas y ninguna exige reescribir el sistema. El crit
 
 Si la universidad habilita el acceso a datos oficiales, por ejemplo para confirmar si una persona es estudiante o docente, Atlas los consulta con una copia local de respaldo. El diseño asume que la fuente puede fallar o actualizarse con poca frecuencia, y garantiza que Atlas siempre responda.
 
-![Consulta de un dato oficial](docs/img/official-data-flow.png)
+<img width="1520" height="1008" alt="official-data-flow" src="https://github.com/user-attachments/assets/2d438c0b-622a-456a-9936-a91aacfd53f1" />
+
 
 Solo se acude a la fuente cuando la copia local venció. Si la fuente no responde, se usa la última copia disponible; si nunca hubo una, se aplica la regla actual, que deduce el rol a partir del correo registrado en la ficha.
 

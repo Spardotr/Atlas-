@@ -1,85 +1,12 @@
-# Atlas — Arquitectura y persistencia
+## Módulo IV: Persistencia de soporte
 
-Atlas se plantea como un monolito modular sobre PostgreSQL, desplegado en contenedores y dimensionado para 100 usuarios concurrentes. Este documento describe su arquitectura, el esquema de datos y el mapa de API.
+Este módulo presenta el esquema de datos mínimo y el mapa de API que soportan el prototipo de Atlas, junto con la arquitectura que los sustenta. Atlas se plantea como un monolito modular sobre PostgreSQL, desplegado en contenedores y dimensionado para 100 usuarios concurrentes.
 
-## 1. Arquitectura
-
-El navegador se comunica únicamente con Nginx, que enruta las peticiones bajo `/api` hacia Flask y las demás hacia Next.js. El backend es un solo proceso dividido en ocho módulos de dominio. Cada módulo es dueño de sus tablas y solo accede a los datos de otro a través de su capa de servicio, lo que permite extraerlo como servicio independiente sin reescribirlo.
-
-<img width="1520" height="1328" alt="architecture" src="https://github.com/user-attachments/assets/be7cab72-682a-481e-87d3-f6c8df9b5032" />
-
-
-### 1.1 Decisiones y compromisos
-
-| Decisión | Alternativa | Justificación | Costo asumido |
-| --- | --- | --- | --- |
-| Monolito modular | Microservicios | La carga se atiende en una máquina y las operaciones críticas se resuelven en una transacción local. | Los módulos escalan en conjunto. |
-| Flask | Django | No impone ORM: permite SQL explícito y un Blueprint por módulo. El equipo domina Python. | Sin panel de administración ni autenticación incluidos. |
-| PostgreSQL | Base documental | El dominio es relacional y exige integridad y unicidad. Ofrece JSONB y búsqueda insensible a tildes. | El equipo administra respaldos y actualizaciones. |
-| Next.js | Aplicación de página única estática | El catálogo es público; el renderizado en servidor reduce el tiempo de carga. | Un contenedor adicional. |
-| Nginx y Docker Compose | Kubernetes | Entrada única con TLS y despliegue reproducible en cualquier nube o en servidores de la universidad. | Una sola máquina es un punto único de falla. |
-| Autenticación con Google Workspace | Contraseñas propias | Atlas no almacena credenciales y reutiliza la cuenta institucional. | Dependencia de Google. |
-
-Todos los componentes son software libre y el diseño no asume una nube específica, lo que mantiene bajo el costo de operación y evita la dependencia de un proveedor.
-
-### 1.2 Principios SOLID
-
-| Principio | Aplicación en Atlas |
-| --- | --- |
-| Responsabilidad única | Cada capa tiene una sola razón de cambio: `routes` traduce HTTP, `service` aplica las reglas del negocio y `repository` ejecuta SQL. |
-| Abierto/cerrado | Un nuevo proveedor de identidad o canal de notificación se agrega como una clase que implementa la interfaz, sin modificar las existentes. |
-| Sustitución de Liskov | Toda implementación de `IdentityProvider` cumple el mismo contrato: devuelve un correo verificado o un error. Google, el directorio de la universidad o un doble de prueba son intercambiables. |
-| Segregación de interfaces | Las interfaces son pequeñas y específicas (`IdentityProvider`, `EmailSender`). Cada módulo expone a los demás solo las funciones de servicio que necesitan. |
-| Inversión de dependencias | Los servicios dependen de interfaces y reciben las implementaciones al construir la aplicación, lo que permite probarlos sin base de datos ni servicios externos. |
-
-### 1.3 Estructura de carpetas
-
-```text
-atlas/
-├── docker-compose.yml
-├── nginx/
-│   └── nginx.conf
-├── frontend/                      # Next.js
-│   ├── app/                       # one folder per route
-│   ├── components/
-│   └── lib/api.ts                 # API client
-├── backend/                       # Flask
-│   ├── app/
-│   │   ├── __init__.py            # app factory and dependency wiring
-│   │   ├── config.py
-│   │   ├── shared/                # db connection, errors, auth decorators
-│   │   └── modules/
-│   │       ├── identity/
-│   │       │   ├── routes.py
-│   │       │   ├── service.py
-│   │       │   ├── repository.py
-│   │       │   └── providers/     # IdentityProvider, google.py
-│   │       ├── catalog/
-│   │       ├── calls/
-│   │       ├── applications/
-│   │       ├── privacy/
-│   │       ├── notifications/
-│   │       ├── metrics/
-│   │       └── imports/
-│   ├── migrations/                # versioned SQL, including analytics views
-│   └── tests/
-└── infra/                         # optional, provider-specific
-```
-
-Todos los módulos repiten la estructura de `identity`.
-
-## 2. Autenticación y control de acceso
-
-La autenticación se delega en Google Workspace mediante OpenID Connect, con la cuenta institucional; el equipo validó el flujo en una prueba de concepto. El backend verifica la firma del token y que el dominio sea `unal.edu.co`, porque el filtro de dominio que presenta Google puede omitirse. El rol de docente director se asigna cuando el correo coincide con el del director de un semillero.
-
-La autorización se verifica en la capa de servicio, por rol y por propiedad: un director solo consulta y modifica su propio semillero, incluso si invoca la API directamente.
-
-## 3. Esquema de datos
+### 4.1 Esquema de datos mínimo
 
 El esquema tiene seis tablas que alimentan el prototipo y cuatro de extensión. Estas últimas almacenan información que la universidad ya registra de cada grupo en Hermes y que el MVP aún no muestra. Atlas no se conecta a Hermes: adopta su estructura como referencia y recibe las fichas por un archivo CSV que carga la Vicedecanatura.
 
 <img width="1520" height="1376" alt="er-diagram" src="https://github.com/user-attachments/assets/df29d57d-7720-45bc-814e-3776755f2274" />
-
 
 Las tablas de línea continua corresponden al MVP; las de línea punteada, a la extensión.
 
@@ -103,7 +30,7 @@ Reglas de integridad en la base:
 - Las autorizaciones no se eliminan: la revocación registra `revoked_at`, como evidencia ante la Ley 1581 de 2012.
 - JSONB se limita a atributos sin estructura fija: `seedbed.extra` y los valores de `change_log`.
 
-### 3.1 Capa analítica
+#### 4.1.1 Capa analítica
 
 El modelo transaccional conserva solo el estado actual de cada registro, lo que no basta para analizar tendencias. Se proponen dos mecanismos complementarios.
 
@@ -113,10 +40,9 @@ El modelo transaccional conserva solo el estado actual de cada registro, lo que 
 
 <img width="1520" height="672" alt="star-schema" src="https://github.com/user-attachments/assets/4a433f8e-b65a-4c47-9af4-78b3d35fb2d0" />
 
-
 Los indicadores del cuadro de mando se calculan sobre este esquema: crecimiento de postulaciones, tiempo de respuesta del director y postulaciones con autorización. Las vistas se refrescan cada noche y no contienen nombres ni correos. Al residir en la misma base no requieren un proceso de carga adicional; si el volumen crece, el mismo modelo se traslada a una bodega de datos.
 
-## 4. Mapa de API
+### 4.2 Mapa de API
 
 La API expone 23 puntos de contacto REST bajo `/api/v1`, en formato JSON. La sesión se mantiene en una cookie HttpOnly.
 
@@ -146,7 +72,7 @@ La API expone 23 puntos de contacto REST bajo `/api/v1`, en formato JSON. La ses
 | `GET /metrics` | Devuelve los indicadores agregados | Vicedecanatura |
 | `POST /admin/seedbeds/import` | Carga fichas desde un archivo CSV | Vicedecanatura |
 
-### 4.1 Uso de los verbos HTTP
+#### 4.2.1 Uso de los verbos HTTP
 
 | Verbo | Uso en Atlas | Idempotente |
 | --- | --- | --- |
@@ -157,16 +83,86 @@ La API expone 23 puntos de contacto REST bajo `/api/v1`, en formato JSON. La ses
 
 Se usa `PATCH` y no `PUT` porque las actualizaciones son parciales. `PUT` reemplaza el recurso completo: obligaría al cliente a enviar todos los campos y sobrescribiría los que administra otro actor, como los que provienen de la carga institucional. `PUT` es idempotente por definición y `PATCH` no lo garantiza; Atlas conserva esa propiedad al restringir `PATCH` a asignaciones de valor.
 
-## 5. Escalabilidad
+### 4.3 Arquitectura de soporte
+
+El navegador se comunica únicamente con Nginx, que enruta las peticiones bajo `/api` hacia Flask y las demás hacia Next.js. El backend es un solo proceso dividido en ocho módulos de dominio. Cada módulo es dueño de sus tablas y solo accede a los datos de otro a través de su capa de servicio, lo que permite extraerlo como servicio independiente sin reescribirlo.
+
+<img width="1520" height="1328" alt="architecture" src="https://github.com/user-attachments/assets/be7cab72-682a-481e-87d3-f6c8df9b5032" />
+
+#### 4.3.1 Decisiones y compromisos
+
+| Decisión | Alternativa | Justificación | Costo asumido |
+| --- | --- | --- | --- |
+| Monolito modular | Microservicios | La carga se atiende en una máquina y las operaciones críticas se resuelven en una transacción local. | Los módulos escalan en conjunto. |
+| Flask | Django | No impone ORM: permite SQL explícito y un Blueprint por módulo. El equipo domina Python. | Sin panel de administración ni autenticación incluidos. |
+| PostgreSQL | Base documental | El dominio es relacional y exige integridad y unicidad. Ofrece JSONB y búsqueda insensible a tildes. | El equipo administra respaldos y actualizaciones. |
+| Next.js | Aplicación de página única estática | El catálogo es público; el renderizado en servidor reduce el tiempo de carga. | Un contenedor adicional. |
+| Nginx y Docker Compose | Kubernetes | Entrada única con TLS y despliegue reproducible en cualquier nube o en servidores de la universidad. | Una sola máquina es un punto único de falla. |
+| Autenticación con Google Workspace | Contraseñas propias | Atlas no almacena credenciales y reutiliza la cuenta institucional. | Dependencia de Google. |
+
+Todos los componentes son software libre y el diseño no asume una nube específica, lo que mantiene bajo el costo de operación y evita la dependencia de un proveedor.
+
+#### 4.3.2 Principios SOLID
+
+| Principio | Aplicación en Atlas |
+| --- | --- |
+| Responsabilidad única | Cada capa tiene una sola razón de cambio: `routes` traduce HTTP, `service` aplica las reglas del negocio y `repository` ejecuta SQL. |
+| Abierto/cerrado | Un nuevo proveedor de identidad o canal de notificación se agrega como una clase que implementa la interfaz, sin modificar las existentes. |
+| Sustitución de Liskov | Toda implementación de `IdentityProvider` cumple el mismo contrato: devuelve un correo verificado o un error. Google, el directorio de la universidad o un doble de prueba son intercambiables. |
+| Segregación de interfaces | Las interfaces son pequeñas y específicas (`IdentityProvider`, `EmailSender`). Cada módulo expone a los demás solo las funciones de servicio que necesitan. |
+| Inversión de dependencias | Los servicios dependen de interfaces y reciben las implementaciones al construir la aplicación, lo que permite probarlos sin base de datos ni servicios externos. |
+
+#### 4.3.3 Estructura de carpetas
+
+```text
+atlas/
+├── docker-compose.yml
+├── nginx/
+│   └── nginx.conf
+├── frontend/                      # Next.js
+│   ├── app/                       
+│   ├── components/
+│   └── lib/api.ts                
+├── backend/                       # Flask
+│   ├── app/
+│   │   ├── __init__.py          
+│   │   ├── config.py
+│   │   ├── shared/             
+│   │   └── modules/
+│   │       ├── identity/
+│   │       │   ├── routes.py
+│   │       │   ├── service.py
+│   │       │   ├── repository.py
+│   │       │   └── providers/     
+│   │       ├── catalog/
+│   │       ├── calls/
+│   │       ├── applications/
+│   │       ├── privacy/
+│   │       ├── notifications/
+│   │       ├── metrics/
+│   │       └── imports/
+│   ├── migrations/                # versioned SQL, including analytics views
+│   └── tests/
+└── infra/  
+```
+
+Todos los módulos repiten la estructura de `identity`.
+
+#### 4.3.4 Autenticación y control de acceso
+
+La autenticación se delega en Google Workspace mediante OpenID Connect, con la cuenta institucional; el equipo validó el flujo en una prueba de concepto. El backend verifica la firma del token y que el dominio sea `unal.edu.co`, porque el filtro de dominio que presenta Google puede omitirse. El rol de docente director se asigna cuando el correo coincide con el del director de un semillero.
+
+La autorización se verifica en la capa de servicio, por rol y por propiedad: un director solo consulta y modifica su propio semillero, incluso si invoca la API directamente.
+
+#### 4.3.5 Escalabilidad
 
 La arquitectura escala por etapas y ninguna exige reescribir el sistema. El criterio para avanzar es que el catálogo responda en 600 ms o menos en el percentil 95. Las etapas, en orden, son: escalar verticalmente la máquina; trasladar PostgreSQL a una máquina dedicada o a un servicio administrado; replicar el backend detrás de un balanceador, posible porque la API no conserva estado; y separar módulos en servicios, empezando por notificaciones, que ya opera desacoplado. La alta disponibilidad y el ambiente de producción se excluyen de este hito porque no son necesarios para validar el MVP.
 
-## 6. Interoperabilidad con fuentes oficiales (posterior al MVP)
+#### 4.3.6 Interoperabilidad con fuentes oficiales (posterior al MVP)
 
 Si la universidad habilita el acceso a datos oficiales, por ejemplo para confirmar si una persona es estudiante o docente, Atlas los consulta con una copia local de respaldo. El diseño asume que la fuente puede fallar o actualizarse con poca frecuencia, y garantiza que Atlas siempre responda.
 
 <img width="1520" height="1008" alt="official-data-flow" src="https://github.com/user-attachments/assets/2d438c0b-622a-456a-9936-a91aacfd53f1" />
-
 
 Solo se acude a la fuente cuando la copia local venció. Si la fuente no responde, se usa la última copia disponible; si nunca hubo una, se aplica la regla actual, que deduce el rol a partir del correo registrado en la ficha.
 

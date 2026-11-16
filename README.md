@@ -4,7 +4,7 @@ Este módulo presenta el esquema de datos mínimo y el mapa de API que soportan 
 
 ### 4.1 Esquema de datos mínimo
 
-El esquema tiene seis tablas que alimentan el prototipo y cuatro de extensión. Estas últimas almacenan información que la universidad ya registra de cada grupo en Hermes y que el MVP aún no muestra. Atlas no se conecta a Hermes: adopta su estructura como referencia y recibe las fichas por un archivo CSV que carga la Vicedecanatura.
+El esquema tiene seis tablas que alimentan el prototipo y cuatro de extensión. Estas últimas almacenan información que la universidad ya registra de cada grupo en Hermes y que el MVP aún no muestra. Atlas no se conecta a Hermes
 
 <img width="1520" height="1376" alt="er-diagram" src="https://github.com/user-attachments/assets/df29d57d-7720-45bc-814e-3776755f2274" />
 
@@ -23,12 +23,23 @@ Las tablas de línea continua corresponden al MVP; las de línea punteada, a la 
 | `classification` | Sede, dependencia, planes de estudio, agenda de conocimiento y áreas OCDE | Extensión |
 | `outbox_email`, `audit_event`, `change_log` | Correos pendientes, auditoría de acciones e historial de cambios | Soporte |
 
-Reglas de integridad en la base:
+##### Reglas de integridad de la base de datos
 
-- Una postulación por estudiante y convocatoria, y una sola convocatoria abierta por semillero.
-- Ninguna postulación sin una autorización vigente, verificada en la misma transacción.
-- Las autorizaciones no se eliminan: la revocación registra `revoked_at`, como evidencia ante la Ley 1581 de 2012.
-- JSONB se limita a atributos sin estructura fija: `seedbed.extra` y los valores de `change_log`.
+**Control de postulaciones**
+
+La base de datos evita que un estudiante se postule más de una vez a la misma convocatoria. También se controla que cada semillero tenga como máximo una convocatoria abierta al mismo tiempo.
+
+**Validación de autorizaciones**
+
+Al momento de registrar una postulación, el sistema verifica que el estudiante cuente con una autorización vigente. Esta validación se realiza durante la misma transacción para evitar registros sin el debido consentimiento.
+
+**Registro de revocaciones**
+
+Las autorizaciones no se eliminan cuando son revocadas. En su lugar, se almacena la fecha de revocación en el campo `revoked_at`, lo que permite conservar un historial como soporte del cumplimiento de la Ley 1581 de 2012.
+
+**Uso de JSONB**
+
+El tipo de dato JSONB se utiliza únicamente en los casos donde la información no tiene una estructura fija o puede variar, como ocurre con los atributos adicionales de `seedbed.extra` y los valores registrados en `change_log`.
 
 #### 4.1.1 Capa analítica
 
@@ -150,13 +161,11 @@ Todos los módulos repiten la estructura de `identity`.
 
 #### 4.3.4 Autenticación y control de acceso
 
-La autenticación se delega en Google Workspace mediante OpenID Connect, con la cuenta institucional; el equipo validó el flujo en una prueba de concepto. El backend verifica la firma del token y que el dominio sea `unal.edu.co`, porque el filtro de dominio que presenta Google puede omitirse. El rol de docente director se asigna cuando el correo coincide con el del director de un semillero.
-
-La autorización se verifica en la capa de servicio, por rol y por propiedad: un director solo consulta y modifica su propio semillero, incluso si invoca la API directamente.
+La autenticación se delega en Google Workspace mediante OpenID Connect, con la cuenta institucional; el equipo validó el flujo en una prueba de concepto. El backend verifica la firma del token y que el dominio sea `unal.edu.co`, porque el filtro de dominio que presenta Google puede omitirse. 
 
 #### 4.3.5 Escalabilidad
 
-La arquitectura escala por etapas y ninguna exige reescribir el sistema. El criterio para avanzar es que el catálogo responda en 600 ms o menos en el percentil 95. Las etapas, en orden, son: escalar verticalmente la máquina; trasladar PostgreSQL a una máquina dedicada o a un servicio administrado; replicar el backend detrás de un balanceador, posible porque la API no conserva estado; y separar módulos en servicios, empezando por notificaciones, que ya opera desacoplado. La alta disponibilidad y el ambiente de producción se excluyen de este hito porque no son necesarios para validar el MVP.
+La arquitectura escala por etapas y ninguna exige reescribir el sistema. El criterio para avanzar es que el catálogo responda en 500 ms o menos en el percentil 95. Las etapas, en orden, son: escalar verticalmente la máquina; trasladar PostgreSQL a una máquina dedicada o a un servicio administrado; replicar el backend detrás de un balanceador, posible porque la API no conserva estado; y separar módulos en servicios, empezando por notificaciones, que ya opera desacoplado. La alta disponibilidad y el ambiente de producción se excluyen de este hito porque no son necesarios para validar el MVP.
 
 #### 4.3.6 Interoperabilidad con fuentes oficiales (posterior al MVP)
 
@@ -164,9 +173,4 @@ Si la universidad habilita el acceso a datos oficiales, por ejemplo para confirm
 
 <img width="1520" height="1008" alt="official-data-flow" src="https://github.com/user-attachments/assets/2d438c0b-622a-456a-9936-a91aacfd53f1" />
 
-Solo se acude a la fuente cuando la copia local venció. Si la fuente no responde, se usa la última copia disponible; si nunca hubo una, se aplica la regla actual, que deduce el rol a partir del correo registrado en la ficha.
-
-- **Dónde reside.** La lógica está en un servicio, `OfficialDataService`, y la copia en un almacén genérico, `official_data_cache`. Las tablas del dominio no cambian.
-- **Cómo se conecta.** Cada fuente se integra con un adaptador (REST, SOAP o archivo) detrás de la interfaz `OfficialDataSource`.
-- **Cómo se mantiene al día.** Una tarea programada refresca las copias en segundo plano. Ante fallos repetidos, las consultas se suspenden durante un intervalo.
-- **Costo asumido.** Consistencia eventual: un cambio en la fuente puede tardar en reflejarse hasta el siguiente refresco.
+Solo se acude a la fuente cuando la copia local venció. Si la fuente no responde, se usa la última copia disponible; si nunca hubo una, se aplica la regla actual, que deduce el rol a partir del correo registrado en la ficha

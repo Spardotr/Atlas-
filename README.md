@@ -1,3 +1,315 @@
+## Módulo II: Arquitectura de Frontend y Componentización
+
+Esta sección documenta la arquitectura del frontend del prototipo de **Atlas** (React 18 + TypeScript + Vite + Tailwind CSS + React Router v6), incluyendo el inventario exhaustivo de componentes y páginas, los patrones visuales e interactivos reutilizados, el análisis de diseño responsivo en la vista principal y la evaluación de las heurísticas de usabilidad de Jakob Nielsen respaldadas directamente por el código fuente.
+
+---
+
+### 2.1 Inventario de componentes y páginas
+
+#### 2.1.1 Componentes transversales y de interfaz (`src/components/`)
+
+| Archivo y líneas | Componente(s) exportado(s) / interno(s) | Qué hace | Dónde se importa y se usa (archivo y línea verificada) |
+| --- | --- | --- | --- |
+| `src/components/A11yPanel.tsx` (L1–L58) | `A11yPanel` (default, L4–L57) | Renderiza un botón flotante lateral y un diálogo de accesibilidad (`role="dialog"`) que permite ajustar el tamaño de fuente raíz (`document.documentElement.style.fontSize` entre `85%` y `150%`, L9–L11 y L46–L48), alternar el modo de alto contraste (`.hc` en `document.documentElement.classList`, L18–L20 y L50–L53) y cerrar con la tecla `Escape` (L12–L17). | **Importado en:** `src/components/Layout.tsx` (L7: `import A11yPanel from './A11yPanel'`).<br>**Usado en:** `src/components/Layout.tsx` (L29: `<A11yPanel />`). |
+| `src/components/DemoPanel.tsx` (L1–L117) | `DemoPanel` (default, L15–L116) | Panel flotante («Modo evaluación») con dos pestañas (`cuentas` y `correos`, L18 y L47–L51): permite cambiar rápidamente entre cuentas de demostración o cerrar sesión (L59–L73), activar/desactivar la visualización de etiquetas de historias de usuario (`showHU`, L75–L78), navegar al mapa de historias (`/evaluacion`, L80) o a una ficha precargada ajena para probar HU-29 (L81–L85), reiniciar los datos de semilla (`resetear()`, L87–L89) e inspeccionar los correos simulados enviados por el sistema (L93–L112). | **Importado en:** `src/components/Layout.tsx` (L6: `import DemoPanel from './DemoPanel'`).<br>**Usado en:** `src/components/Layout.tsx` (L30: `<DemoPanel />`). |
+| `src/components/Footer.tsx` (L1–L62) | `Footer` (default, L15–L61) | Pie de página institucional con las 4 columnas de enlaces normativos e institucionales de la UNAL (`COLUMNAS`, L6–L11; «Mapa del sitio» enlaza internamente a `/evaluacion`, L23–L24), dirección física y PBX (L36–L42), derechos de autor y fecha de actualización dinámica (`fmtFecha(hoyISO())`, L44–L50) y logos institucionales (`orgullo-unal.png`, `agencia-unal.png`, `gov-co.png`, L52–L58). | **Importado en:** `src/components/Layout.tsx` (L4: `import Footer from './Footer'`).<br>**Usado en:** `src/components/Layout.tsx` (L27: `<Footer />`). |
+| `src/components/Header.tsx` (L1–L264) | `Header` (default, L52–L263)<br>*Internos:* `Redes` (L11–L29), `XIcon` (L30–L36), `Marca` (L39–L50) | Encabezado institucional fijo (`sticky top-0 z-50`, L109) con barra superior gris de perfiles UNAL y redes sociales (L111–L128), bloque de escudo oficial (`Marca`, L132–L143), navegación principal dinámica según el rol activo (`director`, `vicedecanatura` o estudiante/visitante, L74–L90 y L153–L173), buscador global por palabra clave (`/?q=...`, L92–L96 y L176–L188), menú desplegable de cuenta autenticada o botón «Iniciar sesión» (L190–L233) y menú hamburguesa colapsable para móvil (`menuMovil`, L239–L260). | **Importado en:** `src/components/Layout.tsx` (L3: `import Header from './Header'`).<br>**Usado en:** `src/components/Layout.tsx` (L23: `<Header />`). |
+| `src/components/Layout.tsx` (L1–L34) | `Layout` (default, L17–L33)<br>*Interno:* `ScrollToTop` (L9–L15) | Estructura maestra de la aplicación: incluye enlace de salto accesible (`Saltar al contenido`, L20–L22), `Header` (L23), contenedor `<main id="contenido">` con `<Outlet />` de React Router (L24–L26), `Footer` (L27), notificaciones `<Toasts />` (L28), `<A11yPanel />` (L29), `<DemoPanel />` (L30) y reseteo de scroll al cambiar de ruta (`ScrollToTop`, L31). | **Importado en:** `src/App.tsx` (L2: `import Layout from './components/Layout'`).<br>**Usado en:** `src/App.tsx` (L23: `<Route element={<Layout />}>`). |
+| `src/components/NoPermiso.tsx` (L1–L15) | `NoPermiso` (default, L4–L14) | Pantalla de bloqueo o recurso no encontrado con ícono de candado (`Lock`, L7), mensaje parametrizable (`mensaje`, L4 y L8) y enlace `.btn-primary` para «Volver al catálogo» (`to="/"`, L10–L12). | **Importado y usado en:**<br>• `src/App.tsx` (import L4; uso L41 para ruta comodín `path="*"`)<br>• `src/components/RequireRole.tsx` (import L5; uso L13)<br>• `src/pages/Confirmacion.tsx` (import L5; uso L11)<br>• `src/pages/DirectorConvocatoria.tsx` (import L6; uso L92)<br>• `src/pages/DirectorFicha.tsx` (import L7; uso L95 y L117)<br>• `src/pages/DirectorPanel.tsx` (import L7; uso L12)<br>• `src/pages/DirectorPostulacionDetalle.tsx` (import L6; uso L22)<br>• `src/pages/DirectorPostulaciones.tsx` (import L5; uso L16)<br>• `src/pages/Ficha.tsx` (import L7; uso L30)<br>• `src/pages/Postular.tsx` (import L9; uso L52) |
+| `src/components/RequireRole.tsx` (L1–L15) | `RequireRole` (default, L7–L15) | Guardián de rutas por rol: si el usuario es `visitante`, redirige a `/ingresar?next=...` conservando la ruta destino (L10–L12); si su rol no está en la lista `roles`, renderiza `<NoPermiso />` (L13); de lo contrario, renderiza `children` (L14). | **Importado en:** `src/App.tsx` (L3: `import RequireRole from './components/RequireRole'`).<br>**Usado en:** `src/App.tsx` (L30–L40, protegiendo las 9 rutas privadas de estudiante, director y vicedecanatura). |
+| `src/components/Semillero.tsx` (L1–L67) | • `BadgeConvocatoria` (L7–L9)<br>• `SelloFicha` (L11–L27)<br>• `Resaltar` (L29–L49)<br>• `TarjetaSemillero` (L51–L66) | • `BadgeConvocatoria`: muestra insignia verde («Convocatoria abierta») o gris («Convocatoria cerrada») según `convocatoriaAbierta(s)`.<br>• `SelloFicha`: muestra si la ficha está «Verificada» (con ícono `CheckCircle2`) o «Precargada» desde Hermes (con `FileClock` y `title` explicativo) junto a la fecha de actualización.<br>• `Resaltar`: subraya con `<mark>` las coincidencias de búsqueda ignorando tildes y mayúsculas (`normalize('NFD')`).<br>• `TarjetaSemillero`: tarjeta clicable (`Link` con clase `.card`) que resume nombre (con `Resaltar`), área temática y `BadgeConvocatoria`. | • `BadgeConvocatoria`: importado y usado en `src/components/Semillero.tsx` (L63), `src/pages/DirectorConvocatoria.tsx` (import L5; uso L97), `src/pages/DirectorFicha.tsx` (import L6; uso L57), `src/pages/DirectorPanel.tsx` (import L6; uso L35), `src/pages/Ficha.tsx` (import L6; uso L76, L102, L117).<br>• `SelloFicha`: importado y usado en `src/pages/DirectorFicha.tsx` (import L6; uso L123), `src/pages/DirectorPanel.tsx` (import L6; uso L26), `src/pages/Ficha.tsx` (import L6; uso L59).<br>• `Resaltar`: usado internamente en `TarjetaSemillero` (`src/components/Semillero.tsx`, L59).<br>• `TarjetaSemillero`: importado y usado en `src/pages/Explorar.tsx` (import L8; uso L141) y `src/pages/Ficha.tsx` (import L6; uso L132). |
+| `src/components/UI.tsx` (L1–L142) | • `HU` (L6–L17)<br>• `Badge` (L20–L33)<br>• `PageTitle` (L35–L46)<br>• `Dialog` (L48–L87)<br>• `Toasts` (L89–L100)<br>• `Campo` (L102–L129)<br>• `Alerta` (L131–L141) | Biblioteca base de primitivos de interfaz:<br>• `HU`: etiqueta visual de historia de usuario visible cuando `showHU` está activo.<br>• `Badge`: insignia con 5 tonos (`verde`, `gris`, `rojo`, `vino`, `outline`).<br>• `PageTitle`: encabezado `<h1>` con barra decorativa verde (`bg-unal-verde`), subtítulo opcional y etiquetas `HU`.<br>• `Dialog`: modal accesible (`role="dialog"`, `aria-modal="true"`) con gestión de foco y cierre con `Escape`.<br>• `Toasts`: contenedor `aria-live="polite"` de notificaciones emergentes temporales.<br>• `Campo`: envoltorio de campo de formulario con `<label>`, texto de ayuda (`hint`) y mensaje de error (`role="alert"`).<br>• `Alerta`: bloque informativo, de éxito o de error (`role="alert"` o `role="status"`). | • `HU`: usado en `UI.tsx` (L40), `DirectorConvocatoria.tsx` (import L4; uso L34), `DirectorFicha.tsx` (import L5; uso L46), `DirectorPanel.tsx` (import L5; uso L50), `DirectorPostulacionDetalle.tsx` (import L5; uso L75), `DirectorPostulaciones.tsx` (import L4; uso L57), `Ficha.tsx` (import L5; uso L14, L60, L99), `MiCuenta.tsx` (import L8; uso L75, L139, L145, L173, L210), `Postular.tsx` (import L8; uso L101, L119, L151), `Tablero.tsx` (import L6; uso L52, L79, L93).<br>• `Badge`: usado en `Semillero.tsx` (import L5; uso L8, L14, L21), `DirectorPostulaciones.tsx` (import L4; uso L10, L46), `Tablero.tsx` (import L6; uso L59).<br>• `PageTitle`: usado en `ComoFunciona.tsx` (L2, L14), `DirectorConvocatoria.tsx` (L4, L95), `DirectorFicha.tsx` (L5, L103, L122), `DirectorPanel.tsx` (L5, L19), `DirectorPostulacionDetalle.tsx` (L5, L30), `DirectorPostulaciones.tsx` (L4, L24), `Evaluacion.tsx` (L3, L53), `Explorar.tsx` (L7, L48), `Ingresar.tsx` (L6, L54), `MiCuenta.tsx` (L8, L56), `Postular.tsx` (L8, L84), `Tablero.tsx` (L6, L47).<br>• `Dialog`: usado en `DirectorConvocatoria.tsx` (L4, L72), `DirectorFicha.tsx` (L5, L137), `DirectorPostulacionDetalle.tsx` (L5, L78), `Ingresar.tsx` (L6, L101), `MiCuenta.tsx` (L8, L217, L232, L253).<br>• `Toasts`: usado en `Layout.tsx` (import L5; uso L28).<br>• `Campo`: usado en `DirectorConvocatoria.tsx` (L4, L52, L55), `DirectorFicha.tsx` (L5, L48–L56), `Postular.tsx` (L8, L152–L179).<br>• `Alerta`: usado en `DirectorConvocatoria.tsx` (L4, L65), `DirectorFicha.tsx` (L5, L104, L127), `DirectorPostulacionDetalle.tsx` (L5, L37, L73), `Ficha.tsx` (L5, L52, L118), `Ingresar.tsx` (L6, L84), `MiCuenta.tsx` (L8, L79), `Postular.tsx` (L8, L87, L194). |
+
+#### 2.1.2 Vistas y páginas (`src/pages/`)
+
+| Archivo y líneas | Componente(s) exportado(s) / interno(s) | Qué hace | Dónde se importa y se usa (archivo y línea verificada) |
+| --- | --- | --- | --- |
+| `src/pages/ComoFunciona.tsx` (L1–L26) | `ComoFunciona` (default, L11–L25) | Página informativa pública que explica en una lista ordenada de 4 pasos numerados (`PASOS`, L4–L9 y L15–L22) el flujo de exploración y postulación en Atlas, con un botón para ir al catálogo (L23). | **Importado en:** `src/App.tsx` (L17: `import ComoFunciona from './pages/ComoFunciona'`).<br>**Usado en:** `src/App.tsx` (L27: `<Route path="/como-funciona" element={<ComoFunciona />} />`). |
+| `src/pages/Confirmacion.tsx` (L1–L31) | `Confirmacion` (default, L7–L30) | Muestra el comprobante de postulación enviada tras completar el formulario: presenta el código único (`p.numero`, L18), el resumen en `<dl>` (semillero, fecha/hora y estado, L19–L23) y enlaces a «Ver mis postulaciones» o «Volver al catálogo» (L25–L28). | **Importado en:** `src/App.tsx` (L9: `import Confirmacion from './pages/Confirmacion'`).<br>**Usado en:** `src/App.tsx` (L31: `<Route path="/postulacion/:numero" element={<RequireRole roles={['estudiante']}><Confirmacion /></RequireRole>} />`). |
+| `src/pages/DirectorConvocatoria.tsx` (L1–L103) | `DirectorConvocatoria` (default, L89–L102)<br>*Interno:* `Formulario` (L9–L87) | Permite al director abrir o cerrar la convocatoria de su semillero mediante un interruptor (`role="switch"`, L40–L49), definir la fecha de cierre y el número de cupos con validaciones (L19–L29 y L51–L58), y ofrece un cierre anticipado con diálogo de confirmación cuando los cupos están llenos (L63–L85). | **Importado en:** `src/App.tsx` (L13: `import DirectorConvocatoria from './pages/DirectorConvocatoria'`).<br>**Usado en:** `src/App.tsx` (L36: `<Route path="/director/convocatoria" element={<RequireRole roles={['director']}><DirectorConvocatoria /></RequireRole>} />`). |
+| `src/pages/DirectorFicha.tsx` (L1–L164) | `DirectorFicha` (default, L87–L163)<br>*Interno:* `FormularioFicha` (L12–L85) | Permite al director reclamar una ficha precargada desde Hermes revisando los 7 campos en un modal de confirmación (`reclamando`, L125–L161) y editar la descripción, línea, nombre del director, requisitos y datos de contacto opcionales con autorización expresa por cada dato (L12–L85). Si un usuario intenta reclamar una ficha cuyo correo no coincide, muestra una alerta de error con enlace `mailto:` a la Vicedecanatura (L99–L118). | **Importado en:** `src/App.tsx` (L12: `import DirectorFicha from './pages/DirectorFicha'`).<br>**Usado en:** `src/App.tsx` (L35: `<Route path="/director/ficha" element={<RequireRole roles={['director', 'estudiante']}><DirectorFicha /></RequireRole>} />`). |
+| `src/pages/DirectorPanel.tsx` (L1–L53) | `DirectorPanel` (default, L9–L52) | Panel resumen del director con tres tarjetas de acceso rápido (`grid gap-4 md:grid-cols-3`, L23): estado de «Mi ficha» (L24–L31), estado y cupos de «Convocatoria» (L33–L40) y contador de «Postulaciones» nuevas sin revisar y pendientes de decisión (L42–L47). | **Importado en:** `src/App.tsx` (L11: `import DirectorPanel from './pages/DirectorPanel'`).<br>**Usado en:** `src/App.tsx` (L34: `<Route path="/director" element={<RequireRole roles={['director']}><DirectorPanel /></RequireRole>} />`). |
+| `src/pages/DirectorPostulacionDetalle.tsx` (L1–L97) | `DirectorPostulacionDetalle` (default, L9–L96) | Muestra al director los datos enviados en una postulación específica (o un aviso si fue retirada, L36–L59), registra la lectura al abrirla (`abrirPostulacion(id)`, L17–L20) y permite aceptarla o rechazarla con diálogo de confirmación (`Dialog`, L61–L94), bloqueando la aceptación si no hay cupos disponibles (`sinCupos`, L25 y L67–L71). | **Importado en:** `src/App.tsx` (L15: `import DirectorPostulacionDetalle from './pages/DirectorPostulacionDetalle'`).<br>**Usado en:** `src/App.tsx` (L38: `<Route path="/director/postulaciones/:id" element={<RequireRole roles={['director']}><DirectorPostulacionDetalle /></RequireRole>} />`). |
+| `src/pages/DirectorPostulaciones.tsx` (L1–L60) | `DirectorPostulaciones` (default, L13–L59)<br>`BadgeEstado` (exportado, L8–L11) | Lista en una tabla ordenada por fecha de recepción (`sort` ascendente, L18–L20) las postulaciones del semillero del director, marcando con insignia `Nueva` las no revisadas (L46). Además exporta `BadgeEstado` para representar visualmente el estado (`Aceptada`, `Rechazada`, `Retirada`, `Enviada`). | • `DirectorPostulaciones`: importado en `src/App.tsx` (L14) y usado en `src/App.tsx` (L37: `<Route path="/director/postulaciones" ... />`).<br>• `BadgeEstado`: importado y usado en `src/pages/DirectorPostulacionDetalle.tsx` (import L7; uso L32), `src/pages/DirectorPostulaciones.tsx` (uso L49) y `src/pages/MiCuenta.tsx` (import L9; uso L160). |
+| `src/pages/Evaluacion.tsx` (L1–L86) | `Evaluacion` (default, L38–L85) | Tabla interactiva de las 22 historias de usuario Must del MVP (`FILAS`, L13–L36): al pulsar «Abrir» en cualquier fila, autentica automáticamente la cuenta de demostración requerida (`loginAs` o `logout`, L42–L49) y navega a la pantalla donde se verifica esa historia. | **Importado en:** `src/App.tsx` (L18: `import Evaluacion from './pages/Evaluacion'`).<br>**Usado en:** `src/App.tsx` (L28: `<Route path="/evaluacion" element={<Evaluacion />} />`). |
+| `src/pages/Explorar.tsx` (L1–L170) | `Explorar` (default, L12–L169) | Pantalla principal del catálogo público de semilleros: incluye buscador en tiempo real por palabra clave sincronizado con el query param `?q=` (L67–L96), filtro por 10 áreas temáticas (`?area=`, L97–L110), contador de resultados en orden alfabético (L113–L120), grilla responsiva de tarjetas `<TarjetaSemillero />` paginadas de a 20 por página (`POR_PAGINA = 20`, L10 y L138–L145) y controles de paginación (L147–L167). | **Importado en:** `src/App.tsx` (L5: `import Explorar from './pages/Explorar'`).<br>**Usado en:** `src/App.tsx` (L24: `<Route path="/" element={<Explorar />} />`). |
+| `src/pages/Ficha.tsx` (L1–L139) | `Ficha` (default, L23–L138)<br>*Internos:* `Dato` (L9–L19), `SinInfo` (L21) | Vista pública de detalle de un semillero: presenta migas de pan (L47–L49), título y `<SelloFicha />` (L55–L62), lista descriptiva `<dl>` con los 7 datos del semillero y contacto autorizado (L65–L96), panel lateral `<aside>` con el estado de la convocatoria, cupos y botón «Quiero unirme» o «Administrar convocatoria» (L98–L124), y hasta 4 semilleros relacionados de la misma área (L35 y L127–L136). | **Importado en:** `src/App.tsx` (L6: `import Ficha from './pages/Ficha'`).<br>**Usado en:** `src/App.tsx` (L25: `<Route path="/semilleros/:id" element={<Ficha />} />`). |
+| `src/pages/Ingresar.tsx` (L1–L134) | `Ingresar` (default, L21–L133)<br>*Interna:* `destinoSeguro` (L16–L19) | Flujo de autenticación en dos pasos: primero presenta el «Aviso de privacidad (v1.0)» conforme a la Ley 1581 de 2012 (L61–L77) y luego habilita el inicio de sesión con Google institucional (`@unal.edu.co`, L78–L98) mediante un diálogo selector de cuentas de demostración o ingreso manual con validación de dominio (L100–L131). | **Importado en:** `src/App.tsx` (L7: `import Ingresar from './pages/Ingresar'`).<br>**Usado en:** `src/App.tsx` (L26: `<Route path="/ingresar" element={<Ingresar />} />`). |
+| `src/pages/MiCuenta.tsx` (L1–L280) | `MiCuenta` (default, L24–L279) | Centro de privacidad y datos del estudiante estructurado en 4 pestañas (`role="tablist"`, L58–L70): «Mis datos» (consulta y edición de nombre, programa y semestre; correo bloqueado, L72–L141), «Mis postulaciones» (historial y retiro de postulaciones abiertas, L143–L169 y L216–L229), «Autorizaciones» (consulta, historial de eventos y revocación con diálogo, L171–L206 y L231–L250) y «Eliminar perfil» (borrado definitivo previa confirmación escribiendo `ELIMINAR`, L208–L214 y L252–L277). | **Importado en:** `src/App.tsx` (L10: `import MiCuenta from './pages/MiCuenta'`).<br>**Usado en:** `src/App.tsx` (L32: `<Route path="/mi-cuenta" element={<RequireRole roles={['estudiante']}><MiCuenta /></RequireRole>} />`). |
+| `src/pages/Postular.tsx` (L1–L205) | `Postular` (default, L34–L204)<br>*Interno:* `Pasos` (L13–L32) | Asistente paso a paso para postularse a un semillero: verifica si ya existe una postulación activa (L57 y L86–L90) y guía al estudiante por el Paso 1 (declaración de mayoría de edad, L99–L115), Paso 2 (autorización obligatoria de datos para postulación y opcional para avisos, L117–L147) y Paso 3 (formulario validado con contador de 500 caracteres y advertencia de no incluir datos sensibles, L149–L200). | **Importado en:** `src/App.tsx` (L8: `import Postular from './pages/Postular'`).<br>**Usado en:** `src/App.tsx` (L30: `<Route path="/postular/:id" element={<RequireRole roles={['estudiante']}><Postular /></RequireRole>} />`). |
+| `src/pages/Tablero.tsx` (L1–L109) | `Tablero` (default, L22–L108)<br>*Interno:* `Progreso` (L13–L20) | Cuadro de mando analítico para la Vicedecanatura con tres indicadores agregados sin datos personales (L48): (1) crecimiento porcentual de postulaciones entre semestres con gráfico de barras en `recharts` (`BarChart`, L51–L76), (2) porcentaje de fichas verificadas y listado de fichas con más de 6 meses sin actualizar (L78–L90), y (3) porcentaje de postulaciones con autorización vigente (L92–L105). | **Importado en:** `src/App.tsx` (L16: `import Tablero from './pages/Tablero'`).<br>**Usado en:** `src/App.tsx` (L40: `<Route path="/vicedecanatura/tablero" element={<RequireRole roles={['vicedecanatura']}><Tablero /></RequireRole>} />`). |
+
+#### 2.1.3 Elementos visuales e interactivos que se repiten
+
+El sistema evita la duplicación de estilos combinando clases utilitarias declaradas en `@layer components` dentro de `src/index.css` (L17–L27) y componentes reutilizables en `src/components/UI.tsx` y `src/components/Semillero.tsx`:
+
+1. **Botones (`.btn`, `.btn-primary`, `.btn-verde`, `.btn-outline`, `.btn-danger` en `src/index.css`, L19–L23):**
+   - `.btn-primary` (fondo verde oscuro institucional `#466B3F`): usado para la acción principal en `NoPermiso.tsx` (L10), `ComoFunciona.tsx` (L23), `Confirmacion.tsx` (L26), `DirectorConvocatoria.tsx` (L60), `DirectorFicha.tsx` (L82, L110, L129, L143), `DirectorPanel.tsx` (L30), `DirectorPostulacionDetalle.tsx` (L64, L84), `Explorar.tsx` (L93, L128), `Ficha.tsx` (L106), `Ingresar.tsx` (L76, L126), `MiCuenta.tsx` (L120), `Postular.tsx` (L113, L137, L197).
+   - `.btn-outline` (borde gris oscuro sobre fondo blanco): usado para acciones secundarias, cancelar o regresar en `A11yPanel.tsx` (L46–L48), `DemoPanel.tsx` (L87), `Confirmacion.tsx` (L27), `DirectorConvocatoria.tsx` (L77), `DirectorFicha.tsx` (L111, L142), `DirectorPanel.tsx` (L39, L46), `DirectorPostulacionDetalle.tsx` (L83), `Explorar.tsx` (L149, L163), `Ficha.tsx` (L109, L120), `Ingresar.tsx` (L87, L88, L93, L101), `MiCuenta.tsx` (L76, L119, L161, L187, L222, L237, L258), `Postular.tsx` (L196).
+   - `.btn-danger` (fondo rojo `#A61C31`): reservado para acciones destructivas o de rechazo en `DirectorConvocatoria.tsx` (L67, L78), `DirectorPostulacionDetalle.tsx` (L63, L84), `MiCuenta.tsx` (L212, L223, L238, L260).
+   - `.btn-verde` (fondo verde claro `#94B43B`): usado en el encabezado para «Iniciar sesión» (`Header.tsx`, L230).
+2. **Tarjetas (`.card` en `src/index.css`, L24, y `<TarjetaSemillero />` en `src/components/Semillero.tsx`, L51–L66):**
+   - La clase `.card` (`rounded border border-unal-gris-claro/70 bg-white p-5`) envuelve contenedores de información y formularios en `Semillero.tsx` (L55), `ComoFunciona.tsx` (L17), `Confirmacion.tsx` (L19), `DirectorConvocatoria.tsx` (L33), `DirectorFicha.tsx` (L45), `DirectorPanel.tsx` (L24, L33, L42), `DirectorPostulacionDetalle.tsx` (L42), `DirectorPostulaciones.tsx` (L28, L30), `Evaluacion.tsx` (L56), `Explorar.tsx` (L73, L123), `Ficha.tsx` (L65, L98), `Ingresar.tsx` (L62, L79), `MiCuenta.tsx` (L73, L147, L153, L175, L179, L196, L209), `Postular.tsx` (L100, L118, L150) y `Tablero.tsx` (L51, L78, L92).
+   - `<TarjetaSemillero />` se repite en las grillas de `Explorar.tsx` (L141) y de semilleros relacionados en `Ficha.tsx` (L132).
+3. **Formularios y controles de entrada (`<Campo />` en `src/components/UI.tsx`, L102–L129; `.input` y `.label` en `src/index.css`, L25–L26):**
+   - `<Campo />` estandariza etiquetas `<label className="label">`, ayudas (`hint`) y errores (`role="alert"`) en `DirectorConvocatoria.tsx` (L52–L57), `DirectorFicha.tsx` (L48–L58) y `Postular.tsx` (L152–L193).
+   - Las clases `.input` y `.label` también se aplican directamente en los formularios de `Explorar.tsx` (L75, L90), `Ingresar.tsx` (L123, L125), `DirectorFicha.tsx` (L65–L74) y `MiCuenta.tsx` (L94–L116, L274–L275).
+4. **Modales de confirmación (`<Dialog />` en `src/components/UI.tsx`, L48–L87):**
+   - Se reutiliza en 7 flujos críticos: cerrar convocatoria anticipadamente (`DirectorConvocatoria.tsx`, L72), reclamar ficha precargada (`DirectorFicha.tsx`, L137), aceptar/rechazar postulación (`DirectorPostulacionDetalle.tsx`, L78), selector de cuenta institucional (`Ingresar.tsx`, L101), retirar postulación (`MiCuenta.tsx`, L217), revocar autorización (`MiCuenta.tsx`, L232) y eliminar perfil (`MiCuenta.tsx`, L253).
+5. **Insignias y alertas (`<Badge />`, `<BadgeConvocatoria />`, `<BadgeEstado />`, `<SelloFicha />`, `<Alerta />`):**
+   - Unifican la representación de estados de convocatoria, verificación de ficha, estado de postulaciones y mensajes de retroalimentación en todas las vistas.
+
+---
+
+### 2.2 Diseño responsivo (Pantalla principal: Explorar)
+
+El análisis responsivo se divide entre el componente de la página principal (`src/pages/Explorar.tsx`) y los componentes de estructura global (`Header.tsx`, `A11yPanel.tsx`, `Footer.tsx`) que se renderizan junto con ella a través de `src/components/Layout.tsx`.
+
+#### 2.2.1 Clases responsivas en `src/pages/Explorar.tsx`
+
+| Elemento en `Explorar.tsx` | Línea | Clases de Tailwind verificadas | Comportamiento en Mobile (`< 640px`) vs. Desktop (`sm: >= 640px`, `lg: >= 1024px`) |
+| --- | --- | --- | --- |
+| Indicador «Orden alfabético» | L119 | `hidden sm:block` | **Mobile:** Permanece oculto (`hidden`) para despejar la barra de estado junto al contador de resultados.<br>**Desktop (`sm:` >= 640px):** Se muestra como bloque (`sm:block`) alineado a la derecha del contador. |
+| Grilla de tarjetas de semilleros (`<ul>`) | L138 | `mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3` | **Mobile (`< 640px`):** Muestra **1 tarjeta por fila** (`grid gap-4` en una sola columna).<br>**Tablet / Desktop pequeño (`sm:` >= 640px):** Cambia a **2 columnas** (`sm:grid-cols-2`).<br>**Desktop amplio (`lg:` >= 1024px):** Cambia a **3 columnas** (`lg:grid-cols-3`). |
+| Contenedor principal, filtros de área y paginación | L47, L78, L98, L148 | `mx-auto max-w-6xl px-4 py-8` (L47)<br>`flex gap-2` / `relative flex-1` (L78–L79)<br>`flex flex-wrap gap-2` (L98)<br>`flex flex-wrap items-center justify-center gap-2` (L148) | Se adaptan de forma fluida sin prefijos de breakpoint: el contenedor limita el ancho a `max-w-6xl` con relleno horizontal `px-4`, el campo de búsqueda se estira con `flex-1`, y tanto los botones de áreas temáticas como los de paginación hacen salto de línea automático en pantallas angostas gracias a `flex-wrap`. |
+
+#### 2.2.2 Clases responsivas en el `Layout` que enmarca la pantalla principal (`Header.tsx`, `A11yPanel.tsx`, `Footer.tsx`)
+
+| Archivo y línea | Elemento | Clases de Tailwind verificadas | Qué cambia entre Mobile y Desktop |
+| --- | --- | --- | --- |
+| `src/components/Header.tsx` (L111) | Barra superior institucional (`Aspirantes`, `Estudiantes`, redes, idioma) | `hidden h-8 ... md:block` | Oculta en móvil (`hidden`); visible únicamente desde `md:` (`>= 768px`). |
+| `src/components/Header.tsx` (L135, L140, L141) | Escudo UNAL (`Marca`) y relleno izquierdo de la barra principal | `hidden ... md:flex md:-translate-y-8` (L135)<br>`md:pl-[260px] md:pr-4` (L140)<br>`shrink-0 md:hidden` (L141) | En móvil se oculta el escudo saliente de `236px × 116px` y se muestra `<Marca compacto />` (`md:hidden`, L141–L142). En `md:` (`>= 768px`) aparece el bloque flotante izquierdo (`md:flex md:-translate-y-8`) y el contenedor principal reserva `260px` a la izquierda (`md:pl-[260px]`). |
+| `src/components/Header.tsx` (L146, L152, L153) | Título del sitio y barra de navegación `<nav>` | `hidden items-center gap-2 md:flex` (L146)<br>`truncate text-sm font-semibold md:hidden` (L152)<br>`mt-2 hidden md:block` (L153) | En móvil se muestra el título abreviado «Atlas · Semilleros» (`md:hidden`) y se oculta la navegación horizontal. En `md:` se muestra el título completo «Atlas · Semilleros de Ingeniería» con ícono `MapPin` y la lista horizontal de enlaces (`md:block`). |
+| `src/components/Header.tsx` (L176) | Buscador rápido del encabezado | `hidden ... lg:flex` | Oculto en móvil y tablet; solo se muestra integrado en la barra superior en pantallas grandes (`lg: >= 1024px`). En móvil se incluye dentro del menú desplegable (L246). |
+| `src/components/Header.tsx` (L235, L239, L245) | Sello de Colombia, botón hamburguesa y panel móvil | `hidden shrink-0 md:block` (L235)<br>`... md:hidden` (L239, L245) | En `md:` se muestra el escudo de Colombia (`md:block`) y se ocultan tanto el botón de menú hamburguesa como el panel colapsable (`md:hidden`). |
+| `src/components/A11yPanel.tsx` (L36) | Texto del botón flotante de accesibilidad | `hidden items-center px-4 sm:flex` | En móvil solo se ve el ícono azul de accesibilidad (`40px × 40px`); desde `sm:` (`>= 640px`) se despliega la etiqueta «Panel de Accesibilidad» (`sm:flex`). |
+| `src/components/Footer.tsx` (L18, L36, L44, L52) | Cuadrícula del pie de página institucional | `sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_1.6fr_1.1fr_auto]` (L18)<br>`sm:col-span-2 lg:col-span-1 lg:border-l ... lg:pl-6` (L36) | Pasa de 1 columna en móvil a 2 columnas en `sm:` y a 7 columnas asimétricas con separadores verticales (`lg:border-l`) en `lg:`. |
+
+---
+
+### 2.3 Heurísticas de usabilidad de Jakob Nielsen
+
+A continuación se documentan **8 heurísticas de Nielsen** verificadas con fragmentos textuales del código fuente:
+
+#### 1. Visibilidad del estado del sistema
+El sistema informa en todo momento qué está ocurriendo mediante indicadores de paso actual, insignias de estado, contadores en vivo y notificaciones emergentes (`aria-live="polite"`).
+
+- **Evidencia 1 — Barra de progreso por pasos en la postulación (`src/pages/Postular.tsx`, L13–L31):**
+```tsx
+function Pasos({ actual }: { actual: 1 | 2 | 3 }) {
+  const items = ['Mayoría de edad', 'Autorización de datos', 'Formulario']
+  return (
+    <ol className="mb-6 flex flex-wrap gap-2 text-sm font-semibold" aria-label="Progreso de la postulación">
+      {items.map((t, i) => {
+        const n = (i + 1) as 1 | 2 | 3
+        const hecho = n < actual
+        return (
+          <li
+            key={t}
+            aria-current={n === actual ? 'step' : undefined}
+            className={clsx('flex items-center gap-2 rounded px-3 py-1', n === actual ? 'bg-unal-verde-oscuro text-white' : hecho ? 'bg-unal-verde/40' : 'bg-unal-gris-claro/50')}
+          >
+            {hecho ? <Check size={14} /> : <span>{n}.</span>} {t}
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+```
+- **Evidencia 2 — Notificaciones temporales y contador dinámico de resultados (`src/components/UI.tsx`, L89–L100 y `src/pages/Explorar.tsx`, L113–L118):**
+```tsx
+export function Toasts() {
+  const { toasts } = useStore()
+  return (
+    <div className="pointer-events-none fixed bottom-4 right-4 z-[80] flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2" aria-live="polite">
+      {toasts.map((t) => (
+        <div key={t.id} role="status" className="pointer-events-auto rounded border-l-4 border-unal-verde bg-unal-gris-oscuro px-4 py-3 text-sm text-white shadow-lg">
+          {t.texto}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+#### 2. Correspondencia entre el sistema y el mundo real
+La interfaz emplea el lenguaje institucional y normativo propio de la Universidad Nacional de Colombia (sistema Hermes, Vicedecanatura de Investigación y Extensión, programas curriculares reales, Ley 1581 de 2012) y formatea las fechas en español (`dd/mm/aaaa`).
+
+- **Evidencia 1 — Terminología institucional y referencia a Hermes (`src/components/Semillero.tsx`, L20–L25):**
+```tsx
+    <span className="inline-flex flex-wrap items-center gap-2 text-sm">
+      <Badge tone="gris" title="Información tomada de fuentes públicas de Hermes; aún no confirmada por el director">
+        <FileClock size={12} /> Precargada
+      </Badge>
+      <span className="text-unal-gris-oscuro">Actualizada el {fmtFecha(s.actualizadoEn)}</span>
+    </span>
+```
+- **Evidencia 2 — Formato de fecha y hora local y comparación alfabética en español (`src/lib/utils.ts`, L20–L33 y L60–L62):**
+```ts
+export function fmtFecha(iso: string): string {
+  const [datePart] = iso.split('T')
+  const [y, m, d] = datePart.split('-')
+  return `${d}/${m}/${y}`
+}
+```
+
+#### 3. Control y libertad del usuario
+Los usuarios disponen de salidas claras («Cancelar», «Volver», cierre con tecla `Escape`) y pueden revertir decisiones importantes como retirar una postulación enviada o revocar una autorización de tratamiento de datos.
+
+- **Evidencia 1 — Retiro de postulación abierta y revocación de autorizaciones (`src/pages/MiCuenta.tsx`, L160–L162 y L186–L190):**
+```tsx
+<BadgeEstado e={p.estado} />
+{p.estado === 'Enviada' && <button className="btn-outline" onClick={() => setRetirando(p.id)}>Retirar postulación</button>}
+```
+- **Evidencia 2 — Cierre de modales con tecla `Escape` y devolución del foco (`src/components/UI.tsx`, L62–L72):**
+```tsx
+  useEffect(() => {
+    // Se ejecuta una sola vez al abrir: el foco va al diálogo y se devuelve al cerrar.
+    const prev = document.activeElement as HTMLElement | null
+    ref.current?.focus()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && cerrarRef.current()
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      prev?.focus?.()
+    }
+  }, [])
+```
+
+#### 4. Consistencia y estándares
+Todo el proyecto utiliza una paleta institucional única en `tailwind.config.js` (`unal-verde`, `unal-verde-oscuro`, `unal-rojo`, `unal-vino`, `unal-header`, `unal-footer`, L6–L18), clases de componentes estandarizadas en `src/index.css` (L17–L27) y el encabezado/pie oficial de la UNAL.
+
+- **Evidencia — Sistema de clases reutilizables en `src/index.css` (L17–L27):**
+```css
+@layer components {
+  .section-title { @apply text-sm font-bold uppercase tracking-[0.18em] text-unal-texto; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-unal-verde-oscuro text-white hover:bg-[#3a5a34]; }
+  .btn-verde { @apply btn bg-unal-verde text-unal-texto hover:bg-[#86a534]; }
+  .btn-outline { @apply btn border border-unal-gris-oscuro bg-white text-unal-texto hover:bg-gray-100; }
+  .btn-danger { @apply btn bg-unal-rojo text-white hover:bg-[#8e1829]; }
+  .card { @apply rounded border border-unal-gris-claro/70 bg-white p-5; }
+  .input { @apply w-full rounded border border-unal-gris-claro bg-white px-3 py-2 text-sm placeholder:text-gray-400; }
+  .label { @apply mb-1 block text-sm font-semibold; }
+}
+```
+
+#### 5. Prevención de errores
+El sistema previene acciones inválidas o accidentales deshabilitando botones hasta cumplir condiciones previas, bloqueando la edición del correo institucional (`readOnly`), impidiendo publicar teléfonos sin consentimiento activo, exigiendo confirmación escrita (`ELIMINAR`) antes de borrar el perfil y bloqueando aceptaciones cuando no hay cupos.
+
+- **Evidencia 1 — Confirmación explícita escribiendo `ELIMINAR` antes de borrar el perfil (`src/pages/MiCuenta.tsx`, L259–L265 y L274–L275):**
+```tsx
+<button
+  className="btn-danger"
+  disabled={confirmacion !== 'ELIMINAR'}
+  onClick={() => { setEliminando(false); navigate('/'); eliminarPerfil() }}
+>
+  Eliminar definitivamente
+</button>
+```
+- **Evidencia 2 — Bloqueo del botón «Aceptar» cuando los cupos de la convocatoria están llenos (`src/pages/DirectorPostulacionDetalle.tsx`, L25 y L61–L71):**
+```tsx
+const sinCupos = s.convocatoria.aceptados >= s.convocatoria.cupos
+// ...
+{p.estado === 'Enviada' && (
+  <div className="mt-6 flex flex-wrap justify-end gap-3">
+    <button className="btn-danger" onClick={() => setConfirmar('Rechazada')}>Rechazar</button>
+    <button className="btn-primary" disabled={sinCupos} onClick={() => setConfirmar('Aceptada')}>Aceptar</button>
+  </div>
+)}
+```
+- **Evidencia 3 — Límite de caracteres (`maxLength={500}`) y advertencia preventiva sobre datos sensibles (`src/pages/Postular.tsx`, L180–L192):**
+```tsx
+<textarea
+  id="f-msg"
+  rows={5}
+  maxLength={MAX_MENSAJE}
+  value={form.mensaje}
+  onChange={(e) => set('mensaje', e.target.value.slice(0, MAX_MENSAJE))}
+  className="input"
+  aria-describedby="msg-ayuda"
+/>
+<div id="msg-ayuda" className="mt-1 flex flex-wrap justify-between gap-2 text-xs">
+  <span className="text-unal-gris-oscuro">No incluyas datos sensibles (salud, religión, origen étnico, orientación sexual, situación económica).</span>
+  <span data-testid="contador-mensaje" className="font-semibold">{form.mensaje.length}/{MAX_MENSAJE}</span>
+</div>
+```
+
+#### 6. Reconocimiento antes que recuerdo
+En lugar de obligar al usuario a recordar opciones o términos buscados, la interfaz prellena el formulario de postulación con los datos del perfil/sesión, ofrece listas cerradas (`<select>`) de programas curriculares y disponibilidad, resalta visualmente con `<mark>` el término buscado en las tarjetas y muestra migas de pan (`Ruta de navegación`).
+
+- **Evidencia 1 — Prellenado de datos del estudiante y listas `<select>` (`src/pages/Postular.tsx`, L43–L49 y L159–L164):**
+```tsx
+  const [form, setForm] = useState({
+    nombre: perfil?.nombre ?? sesion?.nombre ?? '',
+    programa: perfil?.programa ?? '',
+    semestre: perfil?.semestre ?? '',
+    disponibilidad: '',
+    mensaje: '',
+  })
+```
+- **Evidencia 2 — Resaltado visual de términos de búsqueda en las tarjetas (`src/components/Semillero.tsx`, L42–L48):**
+```tsx
+  return (
+    <>
+      {texto.slice(0, i)}
+      <mark className="bg-unal-verde/40 px-0.5">{texto.slice(i, i + nq.length)}</mark>
+      {texto.slice(i + nq.length)}
+    </>
+  )
+```
+
+#### 7. Ayuda a los usuarios a reconocer, diagnosticar y recuperarse de errores
+Los mensajes de error están redactados en lenguaje claro, indican exactamente cuál fue el problema y ofrecen enlaces o botones de acción inmediata para resolverlo.
+
+- **Evidencia 1 — Recuperación ante intento de ingreso con correo fuera del dominio `@unal.edu.co` (`src/pages/Ingresar.tsx`, L82–L91):**
+```tsx
+{rechazo && (
+  <div className="mb-4">
+    <Alerta tono="error">
+      <p className="font-semibold">Solo puedes entrar con tu correo @unal.edu.co</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button className="btn-outline" onClick={() => { setRechazo(false); setSelector(true) }}>Intentar con otra cuenta</button>
+        <Link to="/" className="btn-outline">Volver al catálogo</Link>
+      </div>
+    </Alerta>
+  </div>
+)}
+```
+- **Evidencia 2 — Recuperación cuando el correo no coincide al reclamar una ficha precargada (`src/pages/DirectorFicha.tsx`, L104–L113):**
+```tsx
+<Alerta tono="error">
+  <p className="font-semibold">Tu correo no coincide con el del director de esta ficha.</p>
+  <p className="mt-2 text-unal-texto">
+    Solo el director registrado puede reclamarla. Si crees que hay un error, pide la corrección a la Vicedecanatura de Investigación y Extensión indicando el semillero «{s.nombre}» y tu correo institucional ({sesion.correo}).
+  </p>
+  <div className="mt-4 flex flex-wrap gap-2">
+    <a className="btn-primary" href={`mailto:${CORREO_VICE}?subject=${encodeURIComponent(`Corrección de ficha: ${s.nombre}`)}`}>Escribir a la Vicedecanatura</a>
+    <Link to={`/semilleros/${s.id}`} className="btn-outline">Volver a la ficha</Link>
+  </div>
+</Alerta>
+```
+
+#### 8. Ayuda y documentación
+El prototipo incorpora una página dedicada («Cómo funciona») con pasos concisos para nuevos usuarios, textos de ayuda contextuales (`hint`) en los campos y sugerencias de contacto cuando un director entra con rol de estudiante.
+
+- **Evidencia — Guía paso a paso en `src/pages/ComoFunciona.tsx` (L4–L9 y L14–L23):**
+```tsx
+const PASOS = [
+  ['Explora', 'Revisa el catálogo de semilleros de Ingeniería sin iniciar sesión y busca por tema o palabra clave.'],
+  ['Revisa la ficha', 'Mira la línea de investigación, los requisitos y si el semillero tiene convocatoria abierta.'],
+  ['Postúlate', 'Inicia sesión con tu correo @unal.edu.co, autoriza el uso de tus datos y envía el formulario.'],
+  ['Recibe respuesta', 'El director acepta o rechaza desde Atlas y te avisamos por correo.'],
+]
+```
+
+---
+
+> **Declaración de uso de IA:** Se solicitó realizar este análisis de código, inventario de componentes, revisión de diseño responsivo y verificación de heurísticas de Nielsen utilizando la herramienta de inteligencia artificial **Antigravity (Google DeepMind · modelo Gemini)** a partir de la inspección estática directa de los archivos en `src/`.
+
+---
+
 ## Módulo IV: Persistencia de soporte
 
 Este módulo presenta el esquema de datos mínimo y el mapa de API que soportan el prototipo de Atlas, junto con la arquitectura que los sustenta. Atlas se plantea como un monolito modular sobre PostgreSQL, desplegado en contenedores y dimensionado para 100 usuarios concurrentes.

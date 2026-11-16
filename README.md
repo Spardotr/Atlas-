@@ -51,7 +51,7 @@ El modelo transaccional conserva solo el estado actual de cada registro, lo que 
 
 <img width="1520" height="672" alt="star-schema" src="https://github.com/user-attachments/assets/4a433f8e-b65a-4c47-9af4-78b3d35fb2d0" />
 
-Los indicadores del cuadro de mando se calculan sobre este esquema: crecimiento de postulaciones, tiempo de respuesta del director y postulaciones con autorización. Las vistas se refrescan cada noche y no contienen nombres ni correos. Al residir en la misma base no requieren un proceso de carga adicional; si el volumen crece, el mismo modelo se traslada a una bodega de datos.
+Los indicadores del cuadro de mando se calculan sobre este esquema: crecimiento de postulaciones, tiempo de respuesta del director y postulaciones con autorización. Las vistas se refrescan cada noche y no contienen nombres ni correos. Al residir en la misma base no requieren un proceso de carga adicional; si el volumen crece, el mismo modelo se traslada a una bodega de datos para separar capa transaccional y analitica independientemente. 
 
 ### 4.2 Mapa de API
 

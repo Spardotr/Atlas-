@@ -85,6 +85,12 @@ El análisis responsivo se divide entre el componente de la página principal (`
 | `src/components/A11yPanel.tsx` (L36) | Texto del botón flotante de accesibilidad | `hidden items-center px-4 sm:flex` | En móvil solo se ve el ícono azul de accesibilidad (`40px × 40px`); desde `sm:` (`>= 640px`) se despliega la etiqueta «Panel de Accesibilidad» (`sm:flex`). |
 | `src/components/Footer.tsx` (L18, L36, L44, L52) | Cuadrícula del pie de página institucional | `sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_1.6fr_1.1fr_auto]` (L18)<br>`sm:col-span-2 lg:col-span-1 lg:border-l ... lg:pl-6` (L36) | Pasa de 1 columna en móvil a 2 columnas en `sm:` y a 7 columnas asimétricas con separadores verticales (`lg:border-l`) en `lg:`. |
 
+#### 2.2.3 Evidencias visuales (Desktop vs. Mobile)
+
+| Vista Desktop (`lg:` >= 1024px) | Vista Mobile (`< 640px`) |
+| :---: | :---: |
+| <img src="./docs/img/explorar-desktop.png" alt="Explorar en escritorio" width="600" /> | <img src="./docs/img/explorar-mobile.png" alt="Explorar en móvil" width="260" /> |
+
 ---
 
 ### 2.3 Heurísticas de usabilidad de Jakob Nielsen

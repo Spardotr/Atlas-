@@ -10,7 +10,7 @@
 
 <br />
 
-Diego Alberto Romero Olmos · Diego Enrique Molina Sanchez · Juan Pablo Zuluaga Galindo · Diego Fernando Fandino Quintero · Jhonny Santiago Huerta Meicuaco · Samuel Ricardo Pardo Trujillo · Santiago Serrano González
+Diego Alberto Romero Olmos · Diego Enrique Molina Sánchez · Juan Pablo Zuluaga Galindo · Diego Fernando Fandiño Quintero · Jhonny Santiago Huerta Meicuaco · Samuel Ricardo Pardo Trujillo · Santiago Serrano González
 
 <br />
 
@@ -48,7 +48,7 @@ No es una imagen estática: es una aplicación web navegable (React 18 + Vite + 
 - La ruta **/evaluacion** relaciona cada historia con la pantalla, la ruta y la cuenta donde se comprueba.
 - Para correrlo en local: `npm install` y `npm run dev` (http://localhost:5173). `npm test` ejecuta las 26 pruebas automáticas.
 
-**Cobertura.** El prototipo **cubre el 100 % de las historias de usuario priorizadas en el Hito 1**: las 22 historias Must del MVP tienen una pantalla navegable (catálogo, búsqueda y ficha; aviso de privacidad e inicio de sesión; postulación en tres pasos; gestión de postulaciones, ficha y convocatoria del director; tablero de Vicedecanatura; y datos y autorizaciones del estudiante).
+**Cobertura.** El prototipo **cubre el 100 % de las historias de usuario priorizadas en el Hito 1**. El backlog tiene 36 historias (22 Must, 9 Should y 5 Could), y las 22 Must, que forman el MVP, tienen cada una una pantalla navegable: catálogo, búsqueda y ficha (HU-01, 02, 04); acceso institucional (HU-08, 09); convocatoria (HU-12); postulación en tres pasos y decisión del director (HU-15 a 19, 21); tablero de Vicedecanatura (HU-24 a 26); ficha y convocatoria del director (HU-29, 30, 32); y datos y autorizaciones del estudiante (HU-33 a 36). Las tareas habilitadoras Must se simulan en el prototipo: TH-01 (carga inicial de fichas precargadas) con los datos de ejemplo, y TH-02 (registro de autorizaciones y revocaciones) con el estado de la aplicación. SP-01 es una investigación con la DNED y no tiene pantalla.
 
 ### 1.2 Uso de IA en el diseño
 
@@ -176,11 +176,12 @@ La primera versión (commit `fe315a0`) trajo 51 archivos y 8.253 líneas: 14 pan
 | Escudo de 38 KB y fuentes que bloqueaban el render | Carga lenta | Imagen de 19 KB, fuentes sin bloqueo y tablero de carga diferida | `593bdb3` |
 | Búsqueda, filtros y estado vacío de Explorar | Pruebas con usuarios (P01, P03, P08) | Botón «×», fila de filtros activos y sugerencias en el estado vacío | `1ceb0f5` |
 | Explorar con la búsqueda como elemento principal y sin ayuda para saber qué buscar | Pruebas con usuarios (P02, P04) | Áreas temáticas primero y sugerencias mientras se escribe | `dbb461a` |
+| Enlaces del pie de 22 px, foco que no seguía el cambio de paso, ejes del Tablero de 10 px y header móvil desbordado a 320 px | Revisión final con axe-core en el navegador | Enlaces de 24 px, foco al título de cada paso, ejes de 12 px y header compacto | `53464c2` |
 | Botón «Reclamar ficha» y «Sin información» en requisitos | Pruebas con usuarios (P05, P06) | «Verificar mi ficha» y dos textos distintos para «sin requisitos» y «no cargados» | `1ceb0f5` |
 | Formularios sin salida | Heurística 3 de Nielsen | «Cancelar» y aviso de cambios sin guardar | `3b8ecd6` |
 | Ficha con descripción, líneas y contacto | Necesidad del negocio | Página web, logo y botón de WhatsApp del semillero | `956b068` |
 
-Resultado medido tras las correcciones de accesibilidad: de 7 fallos reales de contraste a 0, y de 1 violación de axe-core en 10 pantallas a 0 en 11.
+Resultado medido tras las correcciones de accesibilidad: de 7 fallos reales de contraste a 0, y 0 violaciones de axe-core en el navegador en 29 revisiones de 14 pantallas.
 
 #### Evidencia visual: antes (primera versión generada, commit `fe315a0`) y después (versión actual)
 
@@ -348,7 +349,7 @@ Se usan los puntos de quiebre de Tailwind: `sm` (640 px), `md` (768 px) y `lg` (
 | Componente | Clases | Móvil | Escritorio |
 | --- | --- | --- | --- |
 | Barra de perfiles y redes | `hidden md:block` | Oculta | Visible desde 768 px |
-| Escudo UNAL | `hidden md:flex` / `md:hidden` | Versión compacta junto al nombre corto «Atlas · Semilleros» | Bloque oscuro que sobresale, con el nombre completo |
+| Escudo y nombre | `hidden md:flex` / `md:hidden`, `min-[380px]:block` | Escudo compacto y nombre corto «Atlas»; por debajo de 380 px el nombre se oculta y el header se compacta para caber en 320 px sin desplazamiento horizontal | Bloque oscuro que sobresale, con el nombre completo «Atlas · Semilleros de Ingeniería» |
 | Menú principal | `hidden md:block` | Se reemplaza por el botón hamburguesa (`md:hidden`) | Menú horizontal |
 | Sello de Colombia | `hidden md:block` | Oculto | Visible |
 | Panel de Accesibilidad | `hidden sm:flex` en el texto | Solo el icono | Icono y texto |
@@ -640,7 +641,7 @@ Los cambios se implementaron después de la ronda de pruebas, en dos tandas: P01
 | P03 | U6 · T1 | Creía que elegir un área anulaba la palabra clave. *«Que cuando uno selecciona por área no invalide el filtro por palabra».* | 3 | HU-01, HU-02 | El prototipo ya combinaba ambos filtros; el problema era que no se veía. Se agregó una fila «Filtros activos» que muestra la palabra y el área a la vez, con un botón para quitar cada una y la nota «se aplican los dos a la vez». La hipótesis inicial (panel lateral) se descartó porque no atacaba la causa. | **Aplicado** |
 | P04 | U7 · T1 | Buscaba «a ciegas» sin saber qué términos existen. *«Que con solo escribir algunas palabras ya empiece a mostrar, como Google».* | 2 | HU-02 | Desde la segunda letra, una lista muestra hasta 6 sugerencias (áreas, semilleros y líneas de investigación) que coinciden desde el inicio de una palabra y sin importar las tildes. Elegir un área la aplica como filtro, un semillero abre su ficha y una línea la busca. Se maneja con el mouse o con el teclado (flechas, Enter y Escape), según el patrón ARIA de combobox. | **Aplicado** |
 | P05 | D1 · TD1 | No entendía «Reclamar ficha» (*«creo que es crear ficha… la palabra suya fue verificar»*) y el teléfono que guardó no aparecía en la ficha. | 2 | HU-29, HU-30 | Se usó la palabra del propio director: el botón, el título y el diálogo dicen ahora **«Verificar mi ficha»**. El teléfono no aparecía porque no había marcado «Autorizo publicar este dato»; ahora, al guardar, un aviso explica que el dato quedó registrado pero no es público hasta autorizarlo. | **Aplicado** |
-| P06 | U10 · T2 | «Sin información» en Requisitos no dejaba saber si no hay requisitos o si no se cargaron. | 2 | HU-04 | Dos textos distintos: en una ficha verificada, «Sin requisitos previos: entrada libre»; en una precargada, «El director aún no ha cargado esta información». | **Aplicado** |
+| P06 | U10 · T2 | «Sin información» en Requisitos no dejaba saber si no hay requisitos o si no se cargaron. | 2 | HU-04 | Dos textos distintos: en una ficha verificada, «Sin requisitos previos: entrada libre»; en una precargada, «El director aún no ha cargado esta información». Esto ajusta, solo para el campo Requisitos, el criterio 2 de HU-04 (un campo vacío muestra «Sin información»). | **Aplicado** |
 | P07 | U10 · T1 | Las áreas ocupan mucho espacio y «te pierdes los semilleros»; el diseño le parece muy sobrio. | 2 | HU-01 | No se cambia. Se clasifica como 2 y no como 1 (estético) porque el usuario también señaló que las áreas le restaban visibilidad a los semilleros; esa parte se atendió junto con P02: los botones de área son ahora más compactos y ocupan menos espacio. La sobriedad visual se mantiene a propósito, por coherencia con la identidad institucional de la UNAL. | **Descartado con justificación** |
 | P08 | U11 · T1 | Una búsqueda sin coincidencia exacta mostraba una pantalla vacía. *«Tampoco hay. ¿Qué hago?».* | 3 | HU-02 | En lugar de la pantalla vacía, se sugieren hasta 4 semilleros relacionados (coincidencia parcial sin tildes) y las áreas temáticas. | **Aplicado** |
 
@@ -662,20 +663,25 @@ Los cambios se implementaron después de la ronda de pruebas, en dos tandas: P01
 
 ### 3.3 Auditoría de accesibilidad (WCAG 2.2, nivel AA)
 
-
 **Inclusión (ABET Student Outcome 2).** La auditoría busca que Atlas pueda usarlo cualquier estudiante de la Facultad, incluidas personas con baja visión, daltonismo o que no usan mouse. Es un factor de bienestar y de contexto social en el diseño del sistema de información.
 
-**Método.** Se calculó la razón de contraste (fórmula WCAG) de 35 combinaciones de texto, componentes y fondos. Se revisó la escala tipográfica. Se inspeccionó el código de cada patrón interactivo (diálogos, menús, pestañas, formularios, foco) y se ejecutó axe-core 4.10 sobre 10 pantallas públicas y con sesión. 
+**Método.**
+- **Contraste:** razón de contraste (fórmula WCAG) de 35 combinaciones de texto, componentes y fondos.
+- **Tipografía:** revisión de la escala tipográfica.
+- **Código:** revisión de cada patrón interactivo (diálogos, menús, pestañas, formularios, buscador y foco).
+- **Prueba automática:** axe-core 4.10 en el navegador (Chromium) sobre el prototipo compilado, con las reglas de WCAG 2.0, 2.1 y 2.2 nivel AA. Fueron **29 revisiones de 14 pantallas distintas**: las pantallas de las 22 historias Must con su cuenta de demostración, más estados como la lista de sugerencias abierta, la búsqueda sin resultados y la página inexistente.
+- **Desplazamiento horizontal:** comprobado a 320, 360, 390 y 430 px de ancho.
 
 #### 3.3.1 Resultado: antes y después de corregir
 
 | Indicador | Antes | Después |
 |---|---|---|
-| Violaciones automáticas (axe-core) | 1 en 10 pantallas | **0 en 11 pantallas** |
+| Violaciones automáticas (axe-core) | 2 tipos: gráfico del Tablero sin nombre accesible y 21 enlaces del pie de 22 px de alto (mínimo 24 px, criterio 2.5.8) | **0 en las 29 revisiones** |
 | Fallos de contraste | 7 | **0** |
 | Hallazgos de prioridad alta | 4 | **0** |
-| Hallazgos de prioridad media | 4 | **0** corregidos de esos 4; 1 nuevo pendiente (M5) |
-| Texto de cuerpo / mínimo | 14 px / 12 px | **16 px / 14 px** (excepto los ejes del gráfico del Tablero, B3) |
+| Hallazgos de prioridad media | 5 | **0** |
+| Texto de cuerpo / mínimo | 14 px / 12 px | **16 px / 14 px** |
+| Header móvil a 320 px | Desbordado (botón de menú cortado) | **Sin desplazamiento horizontal** |
 
 #### 3.3.2 Contraste de color
 
@@ -684,17 +690,18 @@ Todo el texto de lectura supera 4,5:1; el valor más bajo es 4,83:1 (texto de ej
 | Elemento | Antes | Después | Criterio |
 |---|---|---|---|
 | Anillo de foco sobre el header y el pie | 1,38:1 y 1,04:1 | 8,45:1 y 6,39:1 (anillo blanco) | 2.4.7, 1.4.11 |
-| Borde de los campos | 2,13:1 | 6,97:1 | 1.4.11 |
+| Borde de los campos y de los botones de área temática | 2,13:1 | 6,97:1 | 1.4.11 |
 | Texto de ejemplo de los campos | 2,54:1 | 4,83:1 | 1.4.3 |
 | Iconos de redes sociales | 2,38:1 | 6,69:1 | 1.4.11 |
 | Texto principal, enlaces, botones, errores, header y pie | — | Entre 5,33:1 y 16:1 | 1.4.3 |
 
-#### 3.3.3 Tamaños de fuente
+#### 3.3.3 Tamaños de fuente y de los objetivos
 
-- Cuerpo, botones y campos a **16 px**; texto secundario a **14 px**; títulos en tres niveles (30, 20 y 18 px).
+- Cuerpo, botones y campos a **16 px**; texto secundario a **14 px**; títulos en tres niveles (30, 20 y 18 px); ejes del gráfico del Tablero a **12 px** (antes 10 y 11 px).
 - Unidades relativas: el zoom del navegador funciona y el viewport no lo bloquea.
 - El Panel de Accesibilidad escala el texto del 85 % al 150 % y ofrece un modo de alto contraste.
-- Excepciones: el logotipo del header (9 y 11 px; WCAG exime los logotipos) y los ejes del gráfico del Tablero (10 y 11 px; pendiente B3).
+- Todos los enlaces y botones miden al menos **24 px** de alto (criterio 2.5.8 de WCAG 2.2).
+- Única excepción de tamaño: el logotipo del header (9 y 11 px), que WCAG exime.
 
 #### 3.3.4 Navegación por teclado
 
@@ -704,16 +711,17 @@ Todo el texto de lectura supera 4,5:1; el valor más bajo es 4,83:1 (texto de ej
 | Foco visible en todo el sitio, también sobre el header y el pie | Cumple (corregido) |
 | Diálogos: el foco entra, queda atrapado con Tab, Escape cierra y el foco vuelve | Cumple (corregido) |
 | Menú de usuario y pestañas de «Mis datos» con flechas, Inicio, Fin y Escape | Cumple (corregido) |
+| Buscador con sugerencias: flechas, Enter y Escape (patrón ARIA de combobox) | Cumple |
 | Errores de formulario vinculados al campo (`aria-invalid`, `aria-describedby`) | Cumple (corregido) |
+| Al pasar de un paso a otro en la postulación, el foco va al título del nuevo paso | Cumple (corregido) |
 | Sin `tabindex` positivos; controles nativos (`button`, `a`, `input`) | Cumple |
-| Al pasar de un paso a otro en la postulación, el foco va al nuevo paso | **Pendiente (M5)** |
+
+Las correcciones de foco, diálogos, errores, pasos de la postulación y sugerencias tienen pruebas automáticas (`npm test`).
 
 #### 3.3.5 Pendientes
 
-1. **M5** (2.4.3): al cambiar de paso en la postulación, el foco vuelve al inicio de la página en lugar de ir al título del nuevo paso.
-2. **B3**: los ejes del gráfico del Tablero miden 10 y 11 px; conviene subirlos a 12 px o más.
-3. **B2**: la navegación y las pestañas en mayúsculas sostenidas cuestan más de leer (no es un criterio WCAG; decisión del equipo).
-4. **Pruebas manuales**: recorrido completo con teclado, VoiceOver o NVDA, zoom al 200 % y ventana de 320 px.
+1. **Pruebas con personas:** recorrido completo con teclado por un usuario, lectores de pantalla (VoiceOver o NVDA) y zoom al 200 % en todas las pantallas.
+2. **Mayúsculas sostenidas** en la navegación y las pestañas: cuestan más de leer, pero no es un criterio WCAG. Queda como decisión de diseño del equipo.
 
 ---
 

@@ -1,3 +1,41 @@
+<div align="center">
+
+<img src="./docs/img/escudo-unal-color.png" alt="Escudo de la Universidad Nacional de Colombia" width="160" />
+
+# INFORME – HITO 2
+
+## Atlas
+
+*Tu mapa hacia la investigación*
+
+<br />
+
+Diego Alberto Romero Olmos · Diego Enrique Molina Sanchez · Juan Pablo Zuluaga Galindo · Diego Fernando Fandino Quintero · Jhonny Santiago Huerta Meicuaco · Samuel Ricardo Pardo Trujillo · Santiago Serrano González
+
+<br />
+
+**Presentado a:** Docente Jhon Alexander García Camargo
+
+**Institución:** Universidad Nacional de Colombia – Sede Bogotá
+
+**Fecha:** 17 de noviembre de 2026
+
+Bogotá, Colombia
+
+</div>
+
+---
+
+**Contenido**
+
+- [Módulo I: Prototipo de Alta Fidelidad](#módulo-i-prototipo-de-alta-fidelidad)
+- [Módulo II: Arquitectura de Frontend y Componentización](#módulo-ii-arquitectura-de-frontend-y-componentización)
+- [Módulo III: QC de Usabilidad y Accesibilidad](#módulo-iii-qc-de-usabilidad-y-accesibilidad)
+- [Módulo IV: Persistencia de soporte](#módulo-iv-persistencia-de-soporte)
+- [Informe de uso de IA](#informe-de-uso-de-ia)
+
+---
+
 ## Módulo I: Prototipo de Alta Fidelidad
 
 ### 1.1 Prototipo interactivo navegable
@@ -940,17 +978,55 @@ Solo se acude a la fuente cuando la copia local venció. Si la fuente no respond
 
 ## Informe de uso de IA
 
-El equipo usó Claude (Anthropic) como asistente durante el Hito 2, conectado a Jira y a Figma mediante el protocolo MCP (Model Context Protocol). Uno de los integrantes usó además Antigravity (Google DeepMind · Gemini) para el análisis del Módulo II, que después se actualizó con Claude (ver la declaración al final de ese módulo).
+El equipo usó inteligencia artificial en todas las etapas del hito, siempre con la misma división del trabajo: **la IA propuso, generó o implementó; el equipo decidió qué se aceptaba y verificó el resultado** con pruebas automáticas, mediciones, revisión de código y pruebas con usuarios. Este informe resume ese uso; cada módulo tiene además su propia declaración.
 
-### Herramientas y conexiones
+### Herramientas
 
-| Conexión | Para qué se usó | Limitación encontrada |
+| Herramienta | Para qué se usó | Módulos |
 | --- | --- | --- |
-| Jira (MCP de Atlassian) | Crear el proyecto, las épicas, las historias, los vínculos de dependencia y las fechas | No permite borrar vínculos ni renombrar el proyecto; esas dos acciones se hicieron desde el navegador con la sesión de un integrante |
-| Figma (MCP oficial) | Leer el archivo del mockup, reutilizar las variables de color y crear vistas y componentes | El plan Starter agotó su cuota de llamadas dos veces; parte del trabajo quedó sin aplicar |
-| Documentos de Claude | Redactar e iterar el Módulo IV | Los diagramas no se exportan a Markdown; se generaron como imágenes para el README |
+| **Claude (Anthropic)** en el editor de código (Claude Code) | Generar el prototipo, implementar las correcciones decididas por el equipo (accesibilidad, hallazgos RITE, mejoras de navegación), revisar la documentación contra el código, tomar las capturas y correr las pruebas | I, II, III, IV |
+| **Claude** conectado a **Jira** (MCP de Atlassian) | Crear el proyecto, las épicas, las historias, los vínculos de dependencia y las fechas | Planeación |
+| **Claude** conectado a **Figma** (MCP oficial) | Leer el mockup, reutilizar sus variables de color y crear vistas y componentes | Diseño |
+| **Documentos de Claude** | Redactar e iterar la arquitectura y la persistencia | IV |
+| **Antigravity** (Google DeepMind · Gemini) | Análisis del código para el inventario de componentes, el diseño responsivo y las heurísticas de Nielsen; lo usó un integrante del equipo | II |
 
-### Caso 1. Sincronización de Jira por MCP
+### Resumen por etapa
+
+| Etapa | Qué hizo la IA | Qué decidió, corrigió o verificó el equipo | Detalle |
+| --- | --- | --- | --- |
+| Planeación (Jira) | Sincronizó el backlog: 7 épicas, historias renombradas, 45 vínculos «bloquea» y fechas | Corrigió el cronograma, revirtió un cambio que la IA aplicó al revés y unificó las etiquetas de entrega | Caso 1 |
+| Diseño (Figma) | Creó 7 vistas y un encabezado institucional reutilizable | Rehízo vistas genéricas con el estilo real del equipo; el escudo y el pie de página quedaron como trabajo manual | Caso 2 |
+| Módulo I: prototipo | Generó el prototipo navegable a partir de un prompt de ocho secciones: 14 pantallas, estado global, datos de ejemplo y 12 pruebas | Detectó con auditoría, pruebas con usuarios y revisión del negocio lo que la IA no cumplía (contraste, foco, teclado, terminología) y decidió cada corrección, que Claude implementó | [1.2](#12-uso-de-ia-en-el-diseño) |
+| Módulo II: arquitectura frontend | Antigravity analizó el código; después Claude actualizó el análisis cuando el código cambió | Revisó que inventario, fragmentos y capturas correspondieran a la versión vigente | Declaración al final del Módulo II |
+| Módulo III: usabilidad y accesibilidad | Claude implementó los 7 cambios aplicados de la ficha RITE y las correcciones de accesibilidad, contrastó el reporte con el Excel y redactó la sección | Condujo las pruebas con 11 usuarios, clasificó los hallazgos, decidió qué cambiar y qué descartar (P07), y confirmó los datos de la prueba (consentimiento, modalidad, códigos) | [3.2](#32-problema-detectado-vs-cambio-aplicado-en-el-prototipo) |
+| Módulo IV: persistencia | Propuso la arquitectura, el esquema y el mapa de API; después Claude los cruzó con las pantallas del prototipo | Descartó los supuestos de la IA (AWS, enlace por correo, identificadores en español), fijó Google Workspace y PostgreSQL, y aprobó los campos y endpoints que faltaban | Caso 3 |
+
+### Lo que la IA hizo mal y cómo se detectó
+
+| Tipo de error | Ejemplo | Cómo se detectó |
+| --- | --- | --- |
+| Dar por cumplido lo que exige medición | El prompt del prototipo pedía contraste AA y foco visible; la primera versión tenía 7 fallos de contraste y diálogos sin trampa de foco | Cálculo de contraste y axe-core (Módulo III) |
+| Supuestos propios sin respaldo del negocio | Despliegue en AWS, inicio de sesión por enlace al correo, fechas del cronograma | Revisión del equipo contra sus decisiones previas |
+| Patrones a medias | Roles ARIA (`dialog`, `menu`, `tab`) sin el comportamiento de teclado que prometen | Revisión de código en la auditoría |
+| Instrucciones entendidas al revés | Modificó el documento del backlog para igualarlo a Jira, cuando la fuente de verdad era el documento | Revisión del resultado en Jira |
+| Documentación que queda desactualizada | El análisis del Módulo II describía un buscador y unos estilos que ya no existían | Comparación de la documentación con el código vigente |
+| Datos que no coinciden entre fuentes | El reporte RITE decía p = 0,019; el Excel da p = 0,014 | Cotejo con la hoja de cálculo |
+
+### Límites de las herramientas
+
+- **Figma:** el plan Starter agotó la cuota de llamadas dos veces y parte del trabajo quedó sin aplicar.
+- **Jira:** la conexión no permite borrar vínculos ni renombrar el proyecto; esas acciones se hicieron a mano.
+- **Documentos de Claude:** los diagramas no se exportan a Markdown; se pasaron a imágenes y el diagrama entidad-relación se rehízo en Mermaid dentro del README.
+
+### Conclusiones
+
+1. La IA acelera lo que es volumen y estructura: un prototipo de 14 pantallas, un backlog completo o un primer borrador de arquitectura en horas.
+2. La calidad depende de la verificación del equipo: los errores más importantes solo aparecieron al medir (contraste, estadística), al comparar con el código o al observar a personas usando el prototipo (terminología, búsqueda).
+3. Las decisiones de negocio fueron siempre del equipo: qué historias priorizar, qué hallazgo corregir o descartar, qué tecnología usar y qué supuestos rechazar.
+
+### Casos detallados
+
+#### Caso 1. Sincronización de Jira por MCP
 
 **Prompt inicial.** "Aplica estos cambios: renombra el proyecto a Atlas, sincroniza el ambiente de Jira con lo que tenemos ahora en el documento del backlog y agrega las dependencias. Ajusta los vínculos 'bloquea' y reprograma las fechas según el nuevo cronograma."
 
@@ -963,7 +1039,7 @@ El equipo usó Claude (Anthropic) como asistente durante el Hito 2, conectado a 
 - La IA entendió al revés una instrucción y modificó el documento para igualarlo a Jira. El equipo aclaró que el documento es la fuente de verdad; la IA revirtió el cambio y ajustó Jira.
 - Las etiquetas de entrega (R1, R2, R3) se reemplazaron por una sola etiqueta MVP, que es la clasificación que usa el documento.
 
-### Caso 2. Mockup en Figma
+#### Caso 2. Mockup en Figma
 
 **Prompt inicial.** "Usa el MCP de Figma para agregar más vistas al mockup de Atlas, basadas en las historias de usuario obligatorias, y aplica el estilo institucional de la universidad que aparece en esta captura." Se adjuntó la captura del encabezado del sitio de la universidad.
 
@@ -975,7 +1051,7 @@ El equipo usó Claude (Anthropic) como asistente durante el Hito 2, conectado a 
 - El escudo de la universidad quedó como marcador: lo inserta el equipo desde el manual de marca.
 - Se pidió un pie de página y ajustar las vistas al sistema de diseño de Google (Material 3). No se aplicó porque la cuota se agotó de nuevo; queda como trabajo manual.
 
-### Caso 3. Arquitectura y persistencia (Módulo IV)
+#### Caso 3. Arquitectura y persistencia (Módulo IV)
 
 **Prompt inicial.** "Para el Módulo IV, que pide el esquema de datos mínimo y el mapa de API, pensamos en un backend dividido por capas de dominio. No creemos necesaria por ahora una arquitectura de microservicios ni hexagonal: no se estiman más de 100 usuarios concurrentes, que caben en una sola máquina, y si el sistema escala debe poder separarse fácilmente en microservicios. La base de datos sería relacional, en PostgreSQL, normalizada y con algunos campos JSON para lo no estructurado. Habría dos ambientes, uno de pruebas y otro de UAT. Ayúdanos a formalizar de manera robusta esta arquitectura, justificando las decisiones, con base en las historias de usuario."
 

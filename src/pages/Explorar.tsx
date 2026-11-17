@@ -15,16 +15,37 @@ export default function Explorar() {
   const q = params.get('q') ?? ''
   const area = params.get('area') ?? ''
   const [texto, setTexto] = useState(q)
-  const [pagina, setPagina] = useState(1)
+  // La página vive en la URL (?pagina=2) para poder volver a ella desde una ficha
+  const pagina = Math.max(1, parseInt(params.get('pagina') ?? '1', 10) || 1)
+  const setPagina = (n: number) => {
+    const p = new URLSearchParams(params)
+    n > 1 ? p.set('pagina', String(n)) : p.delete('pagina')
+    setParams(p, { replace: true })
+  }
   const inputRef = useRef<HTMLInputElement>(null)
+  const resultadosRef = useRef<HTMLHeadingElement>(null)
+
+  // Los resultados quedan debajo de la caja de búsqueda y las áreas: tras buscar, filtrar o paginar se lleva la vista
+  // hasta ellos y se mueve el foco al encabezado para que también lo anuncien los lectores de pantalla.
+  const irAResultados = () => {
+    const el = resultadosRef.current
+    if (!el) return
+    const sinMovimiento = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView?.({ behavior: sinMovimiento ? 'auto' : 'smooth', block: 'start' })
+    el.focus({ preventScroll: true })
+  }
+  const cambiarPagina = (n: number) => {
+    setPagina(n)
+    irAResultados()
+  }
 
   useEffect(() => setTexto(q), [q])
-  useEffect(() => setPagina(1), [q, area])
 
   const actualizar = (nuevo: { q?: string; area?: string }) => {
     const p = new URLSearchParams(params)
     if (nuevo.q !== undefined) nuevo.q ? p.set('q', nuevo.q) : p.delete('q')
     if (nuevo.area !== undefined) nuevo.area ? p.set('area', nuevo.area) : p.delete('area')
+    p.delete('pagina') // al cambiar la búsqueda o el filtro se vuelve a la primera página
     setParams(p, { replace: true })
   }
 
@@ -79,6 +100,7 @@ export default function Explorar() {
         onSubmit={(e) => {
           e.preventDefault()
           actualizar({ q: texto.trim() })
+          irAResultados()
         }}
         className="card"
       >
@@ -120,14 +142,17 @@ export default function Explorar() {
             Buscar
           </button>
         </div>
-        <p className="section-title mt-5 mb-2 text-xs">Áreas temáticas</p>
+        <p className="mt-5 mb-2 text-lg font-semibold">Áreas temáticas</p>
         <div className="flex flex-wrap gap-2">
           {AREAS.map((a) => (
             <button
               key={a}
               type="button"
               aria-pressed={area === a}
-              onClick={() => actualizar({ area: area === a ? '' : a })}
+              onClick={() => {
+                actualizar({ area: area === a ? '' : a })
+                irAResultados()
+              }}
               className={`rounded border px-3 py-1 text-sm ${area === a ? 'border-unal-verde-oscuro bg-unal-verde-oscuro text-white' : 'border-unal-gris-claro bg-white hover:bg-gray-50'}`}
             >
               {a}
@@ -136,9 +161,15 @@ export default function Explorar() {
         </div>
       </form>
 
+      {/* Orden de encabezados: h1 (título) → h2 (resultados) → h3 (cada tarjeta) */}
+      <h2 ref={resultadosRef} tabIndex={-1} className="section-title mt-8 scroll-mt-40 outline-none">
+        {q || area
+          ? `${filtrados.length} ${filtrados.length === 1 ? 'resultado' : 'resultados'}${q ? ` para «${q}»` : ''}${area ? ` en ${area}` : ''}`
+          : 'Todos los semilleros'}
+      </h2>
       {/* P03: los filtros se combinan; esta fila lo hace visible y permite quitar cada uno por separado */}
       {(q || area) && (
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm" aria-label="Filtros activos">
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm" aria-label="Filtros activos">
           <span className="font-semibold">Filtros activos:</span>
           {q && (
             <button type="button" onClick={() => { setTexto(''); actualizar({ q: '' }) }} aria-label={`Quitar palabra clave «${q}»`} className="inline-flex items-center gap-1 rounded border border-unal-verde-oscuro bg-white px-2 py-0.5">
@@ -154,7 +185,7 @@ export default function Explorar() {
         </div>
       )}
 
-      <div className="mt-6 flex items-center justify-between text-sm text-unal-gris-oscuro" aria-live="polite">
+      <div className="mt-3 flex items-center justify-between text-sm text-unal-gris-oscuro" aria-live="polite">
         <p data-testid="contador">
           {filtrados.length === 0
             ? '0 semilleros'
@@ -209,7 +240,7 @@ export default function Explorar() {
 
       {totalPaginas > 1 && (
         <nav aria-label="Paginación" className="mt-8 flex flex-wrap items-center justify-center gap-2">
-          <button className="btn-outline" disabled={pag === 1} onClick={() => setPagina(pag - 1)}>
+          <button className="btn-outline" disabled={pag === 1} onClick={() => cambiarPagina(pag - 1)}>
             Anterior
           </button>
           {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
@@ -217,13 +248,13 @@ export default function Explorar() {
               key={n}
               aria-current={n === pag ? 'page' : undefined}
               aria-label={`Página ${n}`}
-              onClick={() => setPagina(n)}
+              onClick={() => cambiarPagina(n)}
               className={`h-9 w-9 rounded border text-sm font-semibold ${n === pag ? 'border-unal-verde-oscuro bg-unal-verde-oscuro text-white' : 'bg-white hover:bg-gray-100'}`}
             >
               {n}
             </button>
           ))}
-          <button className="btn-outline" disabled={pag === totalPaginas} onClick={() => setPagina(pag + 1)}>
+          <button className="btn-outline" disabled={pag === totalPaginas} onClick={() => cambiarPagina(pag + 1)}>
             Siguiente
           </button>
         </nav>

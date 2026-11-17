@@ -72,7 +72,14 @@ export default function Ficha() {
             <Dato etiqueta="Correo del director">
               {s.director.correo ? <a className="font-semibold text-unal-verde-oscuro underline" href={`mailto:${s.director.correo}`}>{s.director.correo}</a> : <SinInfo />}
             </Dato>
-            <Dato etiqueta="Requisitos">{s.requisitos || <SinInfo />}</Dato>
+            {/* P06: distinguir «no hay requisitos» de «el director no ha cargado la información» */}
+            <Dato etiqueta="Requisitos">
+              {s.requisitos || (
+                <span className="italic text-unal-gris-oscuro">
+                  {s.estadoFicha === 'Verificada' ? 'Sin requisitos previos: entrada libre' : 'El director aún no ha cargado esta información'}
+                </span>
+              )}
+            </Dato>
             <Dato etiqueta="Estado de convocatoria"><BadgeConvocatoria s={s} /></Dato>
           </dl>
 

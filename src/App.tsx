@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import RequireRole from './components/RequireRole'
@@ -13,7 +14,8 @@ import DirectorFicha from './pages/DirectorFicha'
 import DirectorConvocatoria from './pages/DirectorConvocatoria'
 import DirectorPostulaciones from './pages/DirectorPostulaciones'
 import DirectorPostulacionDetalle from './pages/DirectorPostulacionDetalle'
-import Tablero from './pages/Tablero'
+// Tablero arrastra recharts (~1 MB en desarrollo): se carga solo al visitarlo
+const Tablero = lazy(() => import('./pages/Tablero'))
 import ComoFunciona from './pages/ComoFunciona'
 import Evaluacion from './pages/Evaluacion'
 
@@ -37,7 +39,7 @@ export default function AppRoutes() {
         <Route path="/director/postulaciones" element={<RequireRole roles={['director']}><DirectorPostulaciones /></RequireRole>} />
         <Route path="/director/postulaciones/:id" element={<RequireRole roles={['director']}><DirectorPostulacionDetalle /></RequireRole>} />
 
-        <Route path="/vicedecanatura/tablero" element={<RequireRole roles={['vicedecanatura']}><Tablero /></RequireRole>} />
+        <Route path="/vicedecanatura/tablero" element={<RequireRole roles={['vicedecanatura']}><Suspense fallback={<p className="px-4 py-10 text-center" role="status">Cargando tablero…</p>}><Tablero /></Suspense></RequireRole>} />
         <Route path="*" element={<NoPermiso mensaje="No encontramos esta página" />} />
       </Route>
     </Routes>

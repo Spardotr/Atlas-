@@ -1,157 +1,371 @@
+## Módulo I: Prototipo de Alta Fidelidad
+
+### 1.1 Prototipo interactivo navegable
+
+**Enlace al prototipo: [https://atlas-sisinfo.vercel.app](https://atlas-sisinfo.vercel.app)**
+
+No es una imagen estática: es una aplicación web navegable (React 18 + Vite + TypeScript + Tailwind CSS) sin backend, cuyo estado vive en memoria con datos de ejemplo y se reinicia al recargar. Para recorrerla:
+
+- El botón **Modo evaluación** (abajo a la izquierda) cambia de cuenta de demostración en un clic (estudiante, director, segundo director, Vicedecanatura y un correo externo que se rechaza), muestra la bandeja de correos simulados, reinicia los datos y activa las etiquetas de historias de usuario (por ejemplo «HU-04») sobre los componentes que las cumplen.
+- La ruta **/evaluacion** relaciona cada historia con la pantalla, la ruta y la cuenta donde se comprueba.
+- Para correrlo en local: `npm install` y `npm run dev` (http://localhost:5173). `npm test` ejecuta las 26 pruebas automáticas.
+
+**Cobertura.** El prototipo **cubre el 100 % de las historias de usuario priorizadas en el Hito 1**: las 22 historias Must del MVP tienen una pantalla navegable (catálogo, búsqueda y ficha; aviso de privacidad e inicio de sesión; postulación en tres pasos; gestión de postulaciones, ficha y convocatoria del director; tablero de Vicedecanatura; y datos y autorizaciones del estudiante).
+
+### 1.2 Uso de IA en el diseño
+
+**Herramienta.** Claude (Anthropic), el mismo asistente descrito en el «Informe de uso de IA» de más abajo. El flujo fue: el equipo redactó el prompt inicial, Claude generó el prototipo y, después, el equipo detectó los problemas (con auditoría de accesibilidad, pruebas con usuarios y revisión del negocio) y decidió qué corregir; **Claude implementó esas correcciones** a partir de las instrucciones del equipo. Las capturas y los commits de esta sección son la evidencia.
+
+#### Prompt inicial
+
+El prompt tenía ocho secciones. El primer mensaje pedía solo la base del sistema y avisaba que las pantallas reales se construirían en mensajes posteriores.
+
+| Sección | Qué exigía |
+|---|---|
+| Stack | React 18, Vite, TypeScript, React Router, Tailwind, shadcn/ui, lucide-react y recharts. Sin Next.js. |
+| 1. Identidad visual | Seis colores UNAL con reglas de uso (verde = acción, rojo = error, sin otros colores ni degradados), Ancízar Sans, esquinas de 4 px, contraste WCAG AA y foco visible. |
+| 2 y 3. Header y footer | Réplica de unal.edu.co a partir de capturas, con menú por rol, buscador y Panel de Accesibilidad. |
+| 4. Roles y sesión | Visitante, estudiante, director y Vicedecanatura; inicio de sesión simulado con Google, sin contraseñas. |
+| 5. Datos | 26 semilleros ficticios con una mezcla definida y 32 postulaciones (17 en 2026-2 y 15 en 2026-1), una sin autorización. |
+| 6. Reglas transversales | Correos simulados con aviso, estados de carga, vacío y error, privacidad v1.0, ningún dato sensible, responsive y teclado. |
+| 7. Modo evaluación | Cambio de cuenta, bandeja de correos, etiquetas de historias y reinicio de datos. |
+| 8. Rutas | 14 rutas y pantalla «No tienes permiso» para las no autorizadas. |
+
+<details>
+<summary>Ver el prompt inicial completo</summary>
+
+> Construye "Atlas", un prototipo web interactivo de alta fidelidad (React 18 con Vite, TypeScript, React Router, Tailwind CSS, shadcn/ui, lucide-react y recharts; NO uses Next.js). Atlas es el sistema de información de semilleros de investigación de la Facultad de Ingeniería de la Universidad Nacional de Colombia (UNAL): catálogo de semilleros, convocatorias y postulación en línea. Es complementario a Hermes (el sistema oficial de la universidad) y no lo reemplaza.
+>
+> Es un PROTOTIPO NAVEGABLE, no una imagen: no hay backend. Todo el comportamiento se simula con estado en el cliente (React Context) y datos de ejemplo. Toda la interfaz está en español de Colombia.
+>
+> **=== 1. IDENTIDAD VISUAL UNAL (obligatoria) ===**
+> Tokens de color (variables CSS + extensión de Tailwind):
+> - unal-verde (institucional): #94B43B (RGB 148,180,59 / Pantone 376 C)
+> - unal-rojo (alterno): #A61C31 (RGB 166,28,49 / Pantone 187 C)
+> - unal-verde-oscuro: #466B3F (RGB 70,107,63 / Pantone 7743 C)
+> - unal-vino: #76232F (RGB 118,35,47 / Pantone 188 C)
+> - unal-gris-oscuro: #565A5C (RGB 86,90,92 / Pantone 425 C)
+> - unal-gris-claro: #B1B2B0 (RGB 177,178,176 / Pantone 421 C)
+> - Texto: casi negro (#1F2224) y blanco. Fondo de página: blanco y gris muy claro (#F4F4F3).
+>
+> Reglas de uso:
+> - Verde institucional = color de acción (botones primarios, indicadores positivos, estado "Abierta"). Para TEXTO verde sobre fondo claro usa unal-verde-oscuro (contraste AA).
+> - Rojo alterno solo para errores, alertas, estados críticos y acciones destructivas.
+> - Vino y grises para jerarquía secundaria, bordes y estados neutros ("Cerrada", "Precargada").
+> - NO inventes otros colores de marca ni degradados.
+>
+> Tipografía: Ancízar Sans (tipografía institucional UNAL, disponible en Google Fonts como "Ancizar Sans"); si no carga, usa sans-serif del sistema. Títulos en semibold. Encabezados de sección en MAYÚSCULAS con tracking amplio y peso bold, como "COLOR INSTITUCIONAL" en la guía.
+> Estilo: sobrio e institucional; esquinas poco redondeadas (4 px), sombras mínimas, iconos de línea, mucho espacio en blanco, contraste WCAG AA, foco de teclado visible.
+>
+> **=== 2. HEADER (replica el de unal.edu.co; ver imagen adjunta) ===**
+> - Barra superior delgada en gris. Alineados a la derecha: Aspirantes | Estudiantes | Egresados | Docentes | Administrativos (separados por divisores finos) y selector "ESP" con flecha.
+> - Barra principal en gris oscuro (#4D4D4D). A la izquierda, un bloque más oscuro y alto que sobresale hacia abajo con el escudo UNAL (usa la imagen adjunta; si no la hay, un placeholder circular claramente marcado) y el texto "UNIVERSIDAD NACIONAL DE COLOMBIA". A su derecha: icono de ubicación y el nombre "Atlas · Semilleros de Ingeniería" en tamaño grande.
+> - Menú principal en MAYÚSCULAS, blanco, con flechita donde haya submenú. Cambia según el rol (ver sección 4).
+> - A la derecha: campo "Buscar semilleros" con lupa (fondo gris claro; al enviar lleva al catálogo con la búsqueda) y el control de sesión ("Iniciar sesión" o menú de usuario).
+> - Botón "Panel de Accesibilidad" flotante bajo el header, a la derecha (como en unal.edu.co), que abre un panel simple: aumentar/disminuir texto y alto contraste.
+> - Header fijo al hacer scroll; en móvil, menú hamburguesa.
+>
+> **=== 3. FOOTER (replica el de unal.edu.co; ver imagen adjunta) ===**
+> Fondo gris (#5F5F5F), texto blanco pequeño, enlaces sin subrayado (subrayan al pasar el cursor). Distribución en una fila:
+> - Columna 1: Régimen Legal, Contratación, Rendición de cuentas, Pago virtual, Calidad
+> - Columna 2: Talento humano, Ofertas de empleo, Concurso docente, Control interno, Buzón de notificaciones
+> - Columna 3: Correo institucional, Redes sociales, Quejas y reclamos, Encuesta, Estadísticas
+> - Columna 4: Mapa del sitio, Preguntas frecuentes, Servicios en línea, Contáctenos, Glosario
+> - Separador vertical y bloque "Contacto página web:" Carrera 45 # 26-85, Edif. Uriel Gutiérrez - Bogotá D.C., Colombia / PBX: (+57) 601 4068888 - (+57) 601 3165000 / Línea Gratuita Nacional: 01 8000 912 597
+> - Bloque derecho alineado a la derecha: "© Copyright 2021 Algunos derechos reservados." / Contáctenos / Acerca de este sitio web / "Actualización: 04/11/2026"
+> - Al extremo derecho: badges "Orgullo UNAL" y "Agencia UNAL" (usa las imágenes adjuntas o placeholders marcados) y el sello gov.co.
+>
+> Los enlaces del footer pueden apuntar a "#". En móvil, las columnas se apilan.
+>
+> **=== 4. ROLES Y SESIÓN SIMULADA ===**
+> Roles: visitante (sin sesión), estudiante, director de semillero, Vicedecanatura.
+> - NUNCA muestres campos de contraseña: Atlas no almacena contraseñas. El inicio de sesión simula "Iniciar sesión con Google": un modal "Elige una cuenta" con estas cuentas de demostración y la opción "Usar otra cuenta" (campo de correo):
+>   - estudiante.demo@unal.edu.co (estudiante)
+>   - director.demo@unal.edu.co (director del semillero "Robótica y Control Móvil")
+>   - director2.demo@unal.edu.co (director de otro semillero)
+>   - vicedecanatura.demo@unal.edu.co (Vicedecanatura)
+>   - externo.demo@gmail.com (dominio no institucional, para probar el rechazo)
+> - El rol se deduce del correo: si coincide con el correo de director de alguna ficha es director; si es el correo de Vicedecanatura, ese rol; cualquier otro @unal.edu.co es estudiante; cualquier otro dominio se rechaza.
+> - Menú del header por rol:
+>   - visitante/estudiante: EXPLORAR · CÓMO FUNCIONA
+>   - director: EXPLORAR · MI SEMILLERO · POSTULACIONES · CONVOCATORIA
+>   - Vicedecanatura: TABLERO · EXPLORAR
+> - Menú de usuario (avatar con correo y chip del rol): "Mis datos y privacidad" (solo estudiante), "Cerrar sesión".
+>
+> **=== 5. DATOS DE EJEMPLO (ficticios; nada de personas reales) ===**
+> Crea /data/semilleros.ts con 26 semilleros de Ingeniería, ordenables alfabéticamente (tildes bien manejadas), para que el catálogo muestre 20 en la página 1 y 6 en la página 2. Cada uno:
+> `{ id, nombre, descripcion, linea, area, director: { nombre (ficticio), correo (@unal.edu.co) }, requisitos, convocatoria: { abierta, cierre (fecha), cupos, aceptados }, estadoFicha: "Verificada" | "Precargada", actualizadoEn, contactoPublico?: { telefono?, whatsapp?, autorizadoPublicar } }`
+> Lista cerrada de áreas: Inteligencia artificial, Robótica y control, Ingeniería de software, Redes y telecomunicaciones, Energía y sostenibilidad, Bioingeniería, Ciencia de datos, Electrónica, Materiales, Estructuras y construcción.
+> Mezcla: ~12 con convocatoria abierta y ~14 cerrada; ~14 "Verificada" y ~12 "Precargada"; 2 fichas con campos vacíos (requisitos y línea); 3 fichas con actualizadoEn de más de 6 meses; solo 2 fichas Verificadas con contactoPublico autorizado; las demás sin teléfono ni WhatsApp. "Robótica y Control Móvil" pertenece a director.demo (convocatoria abierta, 5 cupos) y otro semillero a director2.demo.
+> También crea postulaciones semilla (17 en el semestre actual 2026-2 y 15 en el anterior 2026-1, de estudiantes ficticios), autorizaciones registradas y 1 postulación semilla sin autorización registrada (para el tablero).
+>
+> **=== 6. ESTADO Y REGLAS TRANSVERSALES ===**
+> - Un AppContext (sesión, perfil del estudiante, declaraciones de edad, registro de autorizaciones y revocaciones { usuario, finalidad, versionAviso, fechaHora, estado }, postulaciones, semilleros, bandeja de correos simulados, bitácora de accesos). Se reinicia al recargar.
+> - "Correos": cuando una historia diga que se envía un correo, muestra un toast "Correo enviado a …" y guarda el correo en la bandeja simulada.
+> - Todas las pantallas tienen estados de carga (skeleton máximo 300 ms), vacío y error.
+> - Los dos textos de privacidad (aviso y autorización) tienen versión "v1.0".
+> - Nunca muestres, pidas ni guardes datos sensibles (edad, género, origen, promedio, estrato, salud, religión).
+> - Responsive (móvil, tablet, escritorio), navegación por teclado y etiquetas ARIA.
+>
+> **=== 7. PANEL DE DEMOSTRACIÓN (solo para evaluar el prototipo) ===**
+> Botón flotante discreto abajo a la izquierda, con rótulo "Modo evaluación", que abre un panel con: (a) cambiar de cuenta de demostración en un clic, (b) bandeja de correos simulados, (c) interruptor "Mostrar etiquetas de historias de usuario" que dibuja chips pequeños (por ejemplo "HU-04") sobre los componentes que cumplen cada historia, (d) "Reiniciar datos".
+>
+> **=== 8. RUTAS ===**
+> / (Explorar) · /semilleros/[id] · /ingresar · /postular/[id] · /postulacion/[numero] · /mi-cuenta · /director · /director/ficha · /director/convocatoria · /director/postulaciones · /director/postulaciones/[id] · /vicedecanatura/tablero · /como-funciona · /evaluacion (se completa al final)
+> Una ruta sin permiso muestra una pantalla "No tienes permiso para ver esta página" con botón para volver al catálogo.
+>
+> **=== ENTREGA DE ESTE PRIMER MENSAJE ===**
+> Construye SOLO: tokens, layout con header y footer, AppContext, datos de ejemplo, panel de demostración, inicio de sesión simulado (selector de cuenta, sin reglas de rechazo todavía) y las rutas con pantallas "En construcción". Las pantallas reales se construirán en los siguientes mensajes; no las anticipes.
+
+</details>
+
+#### Resultado de la IA
+
+La primera versión (commit `fe315a0`) trajo 51 archivos y 8.253 líneas: 14 pantallas, 9 componentes, datos de ejemplo, estado global y 12 pruebas de flujo. Cumplió bien lo verificable en el código: 26 fichas con la mezcla pedida (14 verificadas, 3 con más de 180 días sin actualizar, solo 2 con contacto público), catálogo de 20 + 6 por página, 17 + 15 postulaciones con una sin autorización, roles y permisos por ruta, y el Modo evaluación. Además tomó decisiones propias que el equipo conservó: una convocatoria cuenta como abierta solo si la bandera está activa, la fecha de cierre no ha pasado y quedan cupos; y el contacto público se puede autorizar por separado para teléfono y WhatsApp.
+
+#### Refactorización humana (decidida por el equipo, implementada con Claude)
+
+| Qué entregó la IA | Problema detectado | Corrección del equipo | Commit |
+|---|---|---|---|
+| Anillo de foco verde oscuro en toda la aplicación | Casi invisible sobre el header y el footer (1,38:1 y 1,04:1; mínimo 3:1) | Anillo blanco en `header` y `footer`, verde dentro de menús blancos | `7fa4970` |
+| `Dialog` con `aria-modal="true"` | No atrapaba el foco; Tab salía hacia la página de fondo | Tab y Shift+Tab ciclan dentro del diálogo, con prueba automática | `7fa4970` |
+| Errores de formulario como texto suelto | Sin `aria-invalid` ni `aria-describedby` | El componente `Campo` vincula error y ayuda con el control | `7fa4970` |
+| Menú de usuario y pestañas con roles ARIA | Sin flechas, Inicio, Fin ni Escape | Teclado completo según el patrón ARIA | `7fa4970` |
+| Borde de campos y placeholder en gris claro | 2,13:1 y 2,54:1 | Gris oscuro (6,97:1) y `gray-500` (4,83:1) | `7fa4970`, `483ab7c` |
+| Encabezados en mayúsculas de 16 a 20 px, cuerpo de 14 px y estados como cajas con aspecto de botón | Lectura difícil, jerarquía débil y estados confundibles con botones | Tres niveles de 30, 20 y 18 px, cuerpo de 16 px y estados como texto de color con un punto | `483ab7c` |
+| Enlaces del header y footer a la portada de unal.edu.co | El prototipo debía replicar el sitio | URL oficiales de cada enlace y red social | `839f468` |
+| Buscador «Buscar semilleros» en el header | Duplicaba la búsqueda de Explorar y su placeholder medía 4,33:1 | Se eliminó del header | `839f468` |
+| Escudo de 38 KB y fuentes que bloqueaban el render | Carga lenta | Imagen de 19 KB, fuentes sin bloqueo y tablero de carga diferida | `593bdb3` |
+| Búsqueda, filtros y estado vacío de Explorar | Pruebas con usuarios (P01, P03, P08) | Botón «×», fila de filtros activos y sugerencias en el estado vacío | `1ceb0f5` |
+| Explorar con la búsqueda como elemento principal y sin ayuda para saber qué buscar | Pruebas con usuarios (P02, P04) | Áreas temáticas primero y sugerencias mientras se escribe | `dbb461a` |
+| Botón «Reclamar ficha» y «Sin información» en requisitos | Pruebas con usuarios (P05, P06) | «Verificar mi ficha» y dos textos distintos para «sin requisitos» y «no cargados» | `1ceb0f5` |
+| Formularios sin salida | Heurística 3 de Nielsen | «Cancelar» y aviso de cambios sin guardar | `3b8ecd6` |
+| Ficha con descripción, líneas y contacto | Necesidad del negocio | Página web, logo y botón de WhatsApp del semillero | `956b068` |
+
+Resultado medido tras las correcciones de accesibilidad: de 7 fallos reales de contraste a 0, y de 1 violación de axe-core en 10 pantallas a 0 en 11.
+
+#### Evidencia visual: antes (primera versión generada, commit `fe315a0`) y después (versión actual)
+
+Capturas tomadas con el mismo navegador y el mismo tamaño de ventana (1440 × 900), compilando cada versión del código.
+
+**Foco de teclado en el header.** El prompt exigía «foco de teclado visible». En la primera versión el anillo verde oscuro casi no se distinguía sobre el gris del header (1,38:1); ahora es blanco (8,45:1).
+
+| Antes | Después |
+|---|---|
+| ![Foco de teclado en el header, primera versión: anillo verde casi invisible](docs/img/ia-foco-antes.png) | ![Foco de teclado en el header, versión actual: anillo blanco bien visible](docs/img/ia-foco-despues.png) |
+
+**Pantalla Explorar.** Cambios visibles: se quitó el buscador del header; las áreas temáticas pasaron arriba de la búsqueda (P02); los títulos pasaron de mayúsculas espaciadas a tres niveles legibles (30, 20 y 18 px); el cuerpo subió de 14 a 16 px; y los estados dejaron de ser cajas con aspecto de botón y son texto de color con un punto.
+
+| Antes | Después |
+|---|---|
+| ![Explorar en la primera versión](docs/img/ia-explorar-antes.png) | ![Explorar en la versión actual](docs/img/ia-explorar-despues.png) |
+
+**Búsqueda sin resultados (hallazgo P08 de las pruebas con usuarios).** Antes, la pantalla quedaba vacía; ahora aparecen botón para borrar, filtros activos y semilleros relacionados.
+
+| Antes | Después |
+|---|---|
+| ![Búsqueda sin resultados en la primera versión: solo un mensaje y un botón](docs/img/ia-vacio-antes.png) | ![Búsqueda sin resultados en la versión actual: filtros activos y semilleros relacionados](docs/img/ia-vacio-despues.png) |
+
+#### Lecciones
+
+- La IA acierta en estructura, volumen y coherencia entre archivos: en la primera versión entregó 14 pantallas, el estado global, los datos de ejemplo y 12 pruebas.
+- Lo que el prompt exigía y requería medición (contraste AA, foco visible, comportamiento de teclado de diálogos, menús y pestañas) no se cumplía en la primera versión. Solo la auditoría lo reveló, así que conviene pedirle a la IA la evidencia junto con el entregable.
+- Los roles ARIA llegaron sin el comportamiento de teclado que prometen; un rol sin comportamiento es peor que no ponerlo.
+- Hallazgos como P05 («Reclamar ficha» se entendía como «crear ficha») solo aparecieron al observar a personas usando el prototipo.
+
+---
+
 ## Módulo II: Arquitectura de Frontend y Componentización
 
-Esta sección documenta la arquitectura del frontend del prototipo de **Atlas** (React 18 + TypeScript + Vite + Tailwind CSS + React Router v6), incluyendo el inventario exhaustivo de componentes y páginas, los patrones visuales e interactivos reutilizados, el análisis de diseño responsivo en la vista principal y la evaluación de las heurísticas de usabilidad de Jakob Nielsen respaldadas directamente por el código fuente.
+El prototipo está construido en **React 18 + TypeScript + Vite + Tailwind CSS + React Router 6**. Esta sección muestra cómo se organiza en componentes, qué elementos se repiten, cómo se adapta la pantalla principal a escritorio y móvil, y cómo cumple 8 de las 10 heurísticas de Nielsen, con evidencia tomada del código.
 
 ---
 
-### 2.1 Inventario de componentes y páginas
+### 2.1 Inventario de componentes
 
-#### 2.1.1 Componentes transversales y de interfaz (`src/components/`)
+#### 2.1.1 Estructura en React
 
-| Archivo y líneas | Componente(s) exportado(s) / interno(s) | Qué hace | Dónde se importa y se usa (archivo y línea verificada) |
+La aplicación se organiza en cinco capas. Cada página corresponde a una ruta; los elementos que se repiten viven en `components/`; el estado compartido está en un único contexto de React.
+
+```text
+src/
+├── main.tsx                 Punto de entrada: crea el enrutador y monta el estado global
+├── App.tsx                  Tabla de rutas (públicas y protegidas por rol)
+├── store.tsx                Estado global (React Context): sesión, semilleros, postulaciones,
+│                            autorizaciones, correos simulados y avisos. Se consume con useStore()
+├── types.ts                 Tipos del dominio (Semillero, Postulacion, Rol, Area…)
+├── data/seed.ts             Datos de ejemplo: 26 semilleros y 32 postulaciones
+├── lib/utils.ts             Funciones puras: fechas, orden alfabético sin tildes, validación de URL y WhatsApp
+├── components/              Piezas reutilizables
+│   ├── Layout.tsx           Marco de todas las páginas
+│   ├── Header.tsx           Encabezado institucional y menú por rol
+│   ├── Footer.tsx           Pie de página institucional
+│   ├── A11yPanel.tsx        Panel de accesibilidad (tamaño de texto y alto contraste)
+│   ├── DemoPanel.tsx        «Modo evaluación» del prototipo
+│   ├── RequireRole.tsx      Protección de rutas por rol
+│   ├── NoPermiso.tsx        Pantalla de acceso denegado o página inexistente
+│   ├── UI.tsx               Primitivos: PageTitle, Badge, Dialog, Campo, Alerta, Toasts, HU
+│   ├── Semillero.tsx        Piezas del dominio: TarjetaSemillero, BadgeConvocatoria, SelloFicha, Resaltar
+│   └── CambiosSinGuardar.tsx  Aviso al salir de un formulario con cambios sin guardar
+└── pages/                   Una vista por ruta (14)
+```
+
+Jerarquía en tiempo de ejecución:
+
+```text
+RouterProvider
+└── StoreProvider (estado global)
+    └── AppRoutes
+        └── Layout
+            ├── Header ─ menú según el rol de la sesión
+            ├── <main> ─ página de la ruta activa
+            │     └── RequireRole (solo en rutas privadas)
+            │           └── Página ─ usa PageTitle, TarjetaSemillero, Campo, Dialog, Alerta…
+            ├── Footer
+            ├── Toasts, A11yPanel, DemoPanel
+```
+
+**Decisiones de estructura**
+
+- **Páginas delgadas, componentes reutilizables.** Las páginas combinan primitivos (`Campo`, `Dialog`, `Alerta`) en lugar de repetir marcado y estilos.
+- **Un solo estado global.** Sin backend, `store.tsx` simula la persistencia y las reglas de negocio (aceptar una postulación descuenta un cupo, revocar una autorización queda en el historial). Lo consumen 17 archivos mediante `useStore()`.
+- **Protección declarativa de rutas.** `RequireRole` envuelve cada ruta privada: sin sesión redirige a `/ingresar` y con un rol distinto muestra `NoPermiso`.
+- **Carga diferida.** El Tablero, que incluye la biblioteca de gráficos `recharts`, se carga solo cuando alguien lo visita (`React.lazy`).
+- **Estilos centralizados.** La paleta UNAL está en `tailwind.config.js` y las clases de botones, tarjetas y campos en `src/index.css`.
+
+#### 2.1.2 Componentes reutilizables
+
+| Componente | Archivo | Qué hace | Dónde se usa |
 | --- | --- | --- | --- |
-| `src/components/A11yPanel.tsx` (L1–L58) | `A11yPanel` (default, L4–L57) | Renderiza un botón flotante lateral y un diálogo de accesibilidad (`role="dialog"`) que permite ajustar el tamaño de fuente raíz (`document.documentElement.style.fontSize` entre `85%` y `150%`, L9–L11 y L46–L48), alternar el modo de alto contraste (`.hc` en `document.documentElement.classList`, L18–L20 y L50–L53) y cerrar con la tecla `Escape` (L12–L17). | **Importado en:** `src/components/Layout.tsx` (L7: `import A11yPanel from './A11yPanel'`).<br>**Usado en:** `src/components/Layout.tsx` (L29: `<A11yPanel />`). |
-| `src/components/DemoPanel.tsx` (L1–L117) | `DemoPanel` (default, L15–L116) | Panel flotante («Modo evaluación») con dos pestañas (`cuentas` y `correos`, L18 y L47–L51): permite cambiar rápidamente entre cuentas de demostración o cerrar sesión (L59–L73), activar/desactivar la visualización de etiquetas de historias de usuario (`showHU`, L75–L78), navegar al mapa de historias (`/evaluacion`, L80) o a una ficha precargada ajena para probar HU-29 (L81–L85), reiniciar los datos de semilla (`resetear()`, L87–L89) e inspeccionar los correos simulados enviados por el sistema (L93–L112). | **Importado en:** `src/components/Layout.tsx` (L6: `import DemoPanel from './DemoPanel'`).<br>**Usado en:** `src/components/Layout.tsx` (L30: `<DemoPanel />`). |
-| `src/components/Footer.tsx` (L1–L62) | `Footer` (default, L15–L61) | Pie de página institucional con las 4 columnas de enlaces normativos e institucionales de la UNAL (`COLUMNAS`, L6–L11; «Mapa del sitio» enlaza internamente a `/evaluacion`, L23–L24), dirección física y PBX (L36–L42), derechos de autor y fecha de actualización dinámica (`fmtFecha(hoyISO())`, L44–L50) y logos institucionales (`orgullo-unal.png`, `agencia-unal.png`, `gov-co.png`, L52–L58). | **Importado en:** `src/components/Layout.tsx` (L4: `import Footer from './Footer'`).<br>**Usado en:** `src/components/Layout.tsx` (L27: `<Footer />`). |
-| `src/components/Header.tsx` (L1–L264) | `Header` (default, L52–L263)<br>*Internos:* `Redes` (L11–L29), `XIcon` (L30–L36), `Marca` (L39–L50) | Encabezado institucional fijo (`sticky top-0 z-50`, L109) con barra superior gris de perfiles UNAL y redes sociales (L111–L128), bloque de escudo oficial (`Marca`, L132–L143), navegación principal dinámica según el rol activo (`director`, `vicedecanatura` o estudiante/visitante, L74–L90 y L153–L173), buscador global por palabra clave (`/?q=...`, L92–L96 y L176–L188), menú desplegable de cuenta autenticada o botón «Iniciar sesión» (L190–L233) y menú hamburguesa colapsable para móvil (`menuMovil`, L239–L260). | **Importado en:** `src/components/Layout.tsx` (L3: `import Header from './Header'`).<br>**Usado en:** `src/components/Layout.tsx` (L23: `<Header />`). |
-| `src/components/Layout.tsx` (L1–L34) | `Layout` (default, L17–L33)<br>*Interno:* `ScrollToTop` (L9–L15) | Estructura maestra de la aplicación: incluye enlace de salto accesible (`Saltar al contenido`, L20–L22), `Header` (L23), contenedor `<main id="contenido">` con `<Outlet />` de React Router (L24–L26), `Footer` (L27), notificaciones `<Toasts />` (L28), `<A11yPanel />` (L29), `<DemoPanel />` (L30) y reseteo de scroll al cambiar de ruta (`ScrollToTop`, L31). | **Importado en:** `src/App.tsx` (L2: `import Layout from './components/Layout'`).<br>**Usado en:** `src/App.tsx` (L23: `<Route element={<Layout />}>`). |
-| `src/components/NoPermiso.tsx` (L1–L15) | `NoPermiso` (default, L4–L14) | Pantalla de bloqueo o recurso no encontrado con ícono de candado (`Lock`, L7), mensaje parametrizable (`mensaje`, L4 y L8) y enlace `.btn-primary` para «Volver al catálogo» (`to="/"`, L10–L12). | **Importado y usado en:**<br>• `src/App.tsx` (import L4; uso L41 para ruta comodín `path="*"`)<br>• `src/components/RequireRole.tsx` (import L5; uso L13)<br>• `src/pages/Confirmacion.tsx` (import L5; uso L11)<br>• `src/pages/DirectorConvocatoria.tsx` (import L6; uso L92)<br>• `src/pages/DirectorFicha.tsx` (import L7; uso L95 y L117)<br>• `src/pages/DirectorPanel.tsx` (import L7; uso L12)<br>• `src/pages/DirectorPostulacionDetalle.tsx` (import L6; uso L22)<br>• `src/pages/DirectorPostulaciones.tsx` (import L5; uso L16)<br>• `src/pages/Ficha.tsx` (import L7; uso L30)<br>• `src/pages/Postular.tsx` (import L9; uso L52) |
-| `src/components/RequireRole.tsx` (L1–L15) | `RequireRole` (default, L7–L15) | Guardián de rutas por rol: si el usuario es `visitante`, redirige a `/ingresar?next=...` conservando la ruta destino (L10–L12); si su rol no está en la lista `roles`, renderiza `<NoPermiso />` (L13); de lo contrario, renderiza `children` (L14). | **Importado en:** `src/App.tsx` (L3: `import RequireRole from './components/RequireRole'`).<br>**Usado en:** `src/App.tsx` (L30–L40, protegiendo las 9 rutas privadas de estudiante, director y vicedecanatura). |
-| `src/components/Semillero.tsx` (L1–L67) | • `BadgeConvocatoria` (L7–L9)<br>• `SelloFicha` (L11–L27)<br>• `Resaltar` (L29–L49)<br>• `TarjetaSemillero` (L51–L66) | • `BadgeConvocatoria`: muestra insignia verde («Convocatoria abierta») o gris («Convocatoria cerrada») según `convocatoriaAbierta(s)`.<br>• `SelloFicha`: muestra si la ficha está «Verificada» (con ícono `CheckCircle2`) o «Precargada» desde Hermes (con `FileClock` y `title` explicativo) junto a la fecha de actualización.<br>• `Resaltar`: subraya con `<mark>` las coincidencias de búsqueda ignorando tildes y mayúsculas (`normalize('NFD')`).<br>• `TarjetaSemillero`: tarjeta clicable (`Link` con clase `.card`) que resume nombre (con `Resaltar`), área temática y `BadgeConvocatoria`. | • `BadgeConvocatoria`: importado y usado en `src/components/Semillero.tsx` (L63), `src/pages/DirectorConvocatoria.tsx` (import L5; uso L97), `src/pages/DirectorFicha.tsx` (import L6; uso L57), `src/pages/DirectorPanel.tsx` (import L6; uso L35), `src/pages/Ficha.tsx` (import L6; uso L76, L102, L117).<br>• `SelloFicha`: importado y usado en `src/pages/DirectorFicha.tsx` (import L6; uso L123), `src/pages/DirectorPanel.tsx` (import L6; uso L26), `src/pages/Ficha.tsx` (import L6; uso L59).<br>• `Resaltar`: usado internamente en `TarjetaSemillero` (`src/components/Semillero.tsx`, L59).<br>• `TarjetaSemillero`: importado y usado en `src/pages/Explorar.tsx` (import L8; uso L141) y `src/pages/Ficha.tsx` (import L6; uso L132). |
-| `src/components/UI.tsx` (L1–L142) | • `HU` (L6–L17)<br>• `Badge` (L20–L33)<br>• `PageTitle` (L35–L46)<br>• `Dialog` (L48–L87)<br>• `Toasts` (L89–L100)<br>• `Campo` (L102–L129)<br>• `Alerta` (L131–L141) | Biblioteca base de primitivos de interfaz:<br>• `HU`: etiqueta visual de historia de usuario visible cuando `showHU` está activo.<br>• `Badge`: insignia con 5 tonos (`verde`, `gris`, `rojo`, `vino`, `outline`).<br>• `PageTitle`: encabezado `<h1>` con barra decorativa verde (`bg-unal-verde`), subtítulo opcional y etiquetas `HU`.<br>• `Dialog`: modal accesible (`role="dialog"`, `aria-modal="true"`) con gestión de foco y cierre con `Escape`.<br>• `Toasts`: contenedor `aria-live="polite"` de notificaciones emergentes temporales.<br>• `Campo`: envoltorio de campo de formulario con `<label>`, texto de ayuda (`hint`) y mensaje de error (`role="alert"`).<br>• `Alerta`: bloque informativo, de éxito o de error (`role="alert"` o `role="status"`). | • `HU`: usado en `UI.tsx` (L40), `DirectorConvocatoria.tsx` (import L4; uso L34), `DirectorFicha.tsx` (import L5; uso L46), `DirectorPanel.tsx` (import L5; uso L50), `DirectorPostulacionDetalle.tsx` (import L5; uso L75), `DirectorPostulaciones.tsx` (import L4; uso L57), `Ficha.tsx` (import L5; uso L14, L60, L99), `MiCuenta.tsx` (import L8; uso L75, L139, L145, L173, L210), `Postular.tsx` (import L8; uso L101, L119, L151), `Tablero.tsx` (import L6; uso L52, L79, L93).<br>• `Badge`: usado en `Semillero.tsx` (import L5; uso L8, L14, L21), `DirectorPostulaciones.tsx` (import L4; uso L10, L46), `Tablero.tsx` (import L6; uso L59).<br>• `PageTitle`: usado en `ComoFunciona.tsx` (L2, L14), `DirectorConvocatoria.tsx` (L4, L95), `DirectorFicha.tsx` (L5, L103, L122), `DirectorPanel.tsx` (L5, L19), `DirectorPostulacionDetalle.tsx` (L5, L30), `DirectorPostulaciones.tsx` (L4, L24), `Evaluacion.tsx` (L3, L53), `Explorar.tsx` (L7, L48), `Ingresar.tsx` (L6, L54), `MiCuenta.tsx` (L8, L56), `Postular.tsx` (L8, L84), `Tablero.tsx` (L6, L47).<br>• `Dialog`: usado en `DirectorConvocatoria.tsx` (L4, L72), `DirectorFicha.tsx` (L5, L137), `DirectorPostulacionDetalle.tsx` (L5, L78), `Ingresar.tsx` (L6, L101), `MiCuenta.tsx` (L8, L217, L232, L253).<br>• `Toasts`: usado en `Layout.tsx` (import L5; uso L28).<br>• `Campo`: usado en `DirectorConvocatoria.tsx` (L4, L52, L55), `DirectorFicha.tsx` (L5, L48–L56), `Postular.tsx` (L8, L152–L179).<br>• `Alerta`: usado en `DirectorConvocatoria.tsx` (L4, L65), `DirectorFicha.tsx` (L5, L104, L127), `DirectorPostulacionDetalle.tsx` (L5, L37, L73), `Ficha.tsx` (L5, L52, L118), `Ingresar.tsx` (L6, L84), `MiCuenta.tsx` (L8, L79), `Postular.tsx` (L8, L87, L194). |
+| `Layout` | `components/Layout.tsx` | Enlace «Saltar al contenido», `Header`, contenido de la ruta, `Footer`, avisos y paneles flotantes; vuelve al inicio de la página al cambiar de ruta. | Envuelve todas las rutas (`App.tsx`). |
+| `Header` | `components/Header.tsx` | Encabezado fijo réplica de unal.edu.co: barra de perfiles y redes, escudo, menú principal según el rol, menú de usuario con teclado completo (flechas, Inicio, Fin, Escape) y menú hamburguesa en móvil. | `Layout` |
+| `Footer` | `components/Footer.tsx` | Cuatro columnas de enlaces oficiales de la UNAL, contacto, derechos y sellos institucionales. | `Layout` |
+| `A11yPanel` | `components/A11yPanel.tsx` | Diálogo para cambiar el tamaño del texto (85 % a 150 %) y activar alto contraste. | `Layout` |
+| `DemoPanel` | `components/DemoPanel.tsx` | «Modo evaluación»: cambia de cuenta de demostración, muestra los correos simulados, activa las etiquetas de historias y reinicia los datos. | `Layout` |
+| `RequireRole` | `components/RequireRole.tsx` | Deja pasar solo a los roles indicados; sin sesión, redirige a `/ingresar` y conserva la ruta de destino. | 9 rutas privadas en `App.tsx` |
+| `NoPermiso` | `components/NoPermiso.tsx` | Mensaje de acceso denegado o página inexistente, con botón para volver al catálogo. | `RequireRole`, ruta `*` y 8 páginas que validan el recurso pedido |
+| `PageTitle` | `components/UI.tsx` | Título `h1` de la página con la línea verde institucional y subtítulo opcional. | 12 páginas |
+| `Badge` | `components/UI.tsx` | Indicador de estado: texto de color con un punto, sin caja, para que no parezca un botón. Cinco tonos. | Base de `BadgeConvocatoria`, `BadgeEstado` y `SelloFicha`; `DirectorPostulaciones`, `Tablero` |
+| `Dialog` | `components/UI.tsx` | Ventana modal accesible: el foco entra al abrir, queda atrapado con Tab y Shift+Tab, Escape la cierra y el foco vuelve al botón de origen. | 8 diálogos: verificar ficha, cerrar convocatoria, decidir postulación, elegir cuenta, retirar postulación, revocar autorización, eliminar perfil y cambios sin guardar |
+| `Campo` | `components/UI.tsx` | Etiqueta, control, ayuda y error de un campo; vincula error y ayuda al control con `aria-invalid` y `aria-describedby`. | `Postular`, `DirectorFicha`, `DirectorConvocatoria` |
+| `Alerta` | `components/UI.tsx` | Mensaje informativo, de éxito o de error (`role="status"` o `role="alert"`). | 7 páginas |
+| `Toasts` | `components/UI.tsx` | Avisos temporales («Correo enviado a…»), anunciados a lectores de pantalla (`aria-live`). | `Layout` |
+| `HU` | `components/UI.tsx` | Etiqueta de historia de usuario (por ejemplo «HU-04»), visible solo con el Modo evaluación. | 10 archivos |
+| `TarjetaSemillero` | `components/Semillero.tsx` | Tarjeta enlazada con nombre (resaltando el término buscado), área, logo opcional y estado de la convocatoria; recuerda la búsqueda de origen para poder volver a ella. | `Explorar` (catálogo y sugerencias), `Ficha` (relacionados) |
+| `BadgeConvocatoria` | `components/Semillero.tsx` | «Convocatoria abierta» o «cerrada», calculado con bandera, fecha de cierre y cupos. | `TarjetaSemillero`, `Ficha`, `DirectorPanel`, `DirectorFicha`, `DirectorConvocatoria` |
+| `BadgeEstado` | `pages/DirectorPostulaciones.tsx` | Estado de una postulación: Enviada, Aceptada, Rechazada o Retirada. | `DirectorPostulaciones`, `DirectorPostulacionDetalle`, `MiCuenta` |
+| `SelloFicha` | `components/Semillero.tsx` | «Verificada» o «Precargada» (tomada de Hermes) con la fecha de actualización. | `Ficha`, `DirectorPanel`, `DirectorFicha` |
+| `useCambiosSinGuardar` | `components/CambiosSinGuardar.tsx` | Avisa antes de salir de un formulario modificado: diálogo propio al navegar dentro de Atlas y aviso del navegador al cerrar o recargar. | `Postular`, `DirectorFicha`, `DirectorConvocatoria` |
 
-#### 2.1.2 Vistas y páginas (`src/pages/`)
+#### 2.1.3 Páginas
 
-| Archivo y líneas | Componente(s) exportado(s) / interno(s) | Qué hace | Dónde se importa y se usa (archivo y línea verificada) |
+| Ruta | Página | Rol | Qué hace |
 | --- | --- | --- | --- |
-| `src/pages/ComoFunciona.tsx` (L1–L26) | `ComoFunciona` (default, L11–L25) | Página informativa pública que explica en una lista ordenada de 4 pasos numerados (`PASOS`, L4–L9 y L15–L22) el flujo de exploración y postulación en Atlas, con un botón para ir al catálogo (L23). | **Importado en:** `src/App.tsx` (L17: `import ComoFunciona from './pages/ComoFunciona'`).<br>**Usado en:** `src/App.tsx` (L27: `<Route path="/como-funciona" element={<ComoFunciona />} />`). |
-| `src/pages/Confirmacion.tsx` (L1–L31) | `Confirmacion` (default, L7–L30) | Muestra el comprobante de postulación enviada tras completar el formulario: presenta el código único (`p.numero`, L18), el resumen en `<dl>` (semillero, fecha/hora y estado, L19–L23) y enlaces a «Ver mis postulaciones» o «Volver al catálogo» (L25–L28). | **Importado en:** `src/App.tsx` (L9: `import Confirmacion from './pages/Confirmacion'`).<br>**Usado en:** `src/App.tsx` (L31: `<Route path="/postulacion/:numero" element={<RequireRole roles={['estudiante']}><Confirmacion /></RequireRole>} />`). |
-| `src/pages/DirectorConvocatoria.tsx` (L1–L103) | `DirectorConvocatoria` (default, L89–L102)<br>*Interno:* `Formulario` (L9–L87) | Permite al director abrir o cerrar la convocatoria de su semillero mediante un interruptor (`role="switch"`, L40–L49), definir la fecha de cierre y el número de cupos con validaciones (L19–L29 y L51–L58), y ofrece un cierre anticipado con diálogo de confirmación cuando los cupos están llenos (L63–L85). | **Importado en:** `src/App.tsx` (L13: `import DirectorConvocatoria from './pages/DirectorConvocatoria'`).<br>**Usado en:** `src/App.tsx` (L36: `<Route path="/director/convocatoria" element={<RequireRole roles={['director']}><DirectorConvocatoria /></RequireRole>} />`). |
-| `src/pages/DirectorFicha.tsx` (L1–L164) | `DirectorFicha` (default, L87–L163)<br>*Interno:* `FormularioFicha` (L12–L85) | Permite al director reclamar una ficha precargada desde Hermes revisando los 7 campos en un modal de confirmación (`reclamando`, L125–L161) y editar la descripción, línea, nombre del director, requisitos y datos de contacto opcionales con autorización expresa por cada dato (L12–L85). Si un usuario intenta reclamar una ficha cuyo correo no coincide, muestra una alerta de error con enlace `mailto:` a la Vicedecanatura (L99–L118). | **Importado en:** `src/App.tsx` (L12: `import DirectorFicha from './pages/DirectorFicha'`).<br>**Usado en:** `src/App.tsx` (L35: `<Route path="/director/ficha" element={<RequireRole roles={['director', 'estudiante']}><DirectorFicha /></RequireRole>} />`). |
-| `src/pages/DirectorPanel.tsx` (L1–L53) | `DirectorPanel` (default, L9–L52) | Panel resumen del director con tres tarjetas de acceso rápido (`grid gap-4 md:grid-cols-3`, L23): estado de «Mi ficha» (L24–L31), estado y cupos de «Convocatoria» (L33–L40) y contador de «Postulaciones» nuevas sin revisar y pendientes de decisión (L42–L47). | **Importado en:** `src/App.tsx` (L11: `import DirectorPanel from './pages/DirectorPanel'`).<br>**Usado en:** `src/App.tsx` (L34: `<Route path="/director" element={<RequireRole roles={['director']}><DirectorPanel /></RequireRole>} />`). |
-| `src/pages/DirectorPostulacionDetalle.tsx` (L1–L97) | `DirectorPostulacionDetalle` (default, L9–L96) | Muestra al director los datos enviados en una postulación específica (o un aviso si fue retirada, L36–L59), registra la lectura al abrirla (`abrirPostulacion(id)`, L17–L20) y permite aceptarla o rechazarla con diálogo de confirmación (`Dialog`, L61–L94), bloqueando la aceptación si no hay cupos disponibles (`sinCupos`, L25 y L67–L71). | **Importado en:** `src/App.tsx` (L15: `import DirectorPostulacionDetalle from './pages/DirectorPostulacionDetalle'`).<br>**Usado en:** `src/App.tsx` (L38: `<Route path="/director/postulaciones/:id" element={<RequireRole roles={['director']}><DirectorPostulacionDetalle /></RequireRole>} />`). |
-| `src/pages/DirectorPostulaciones.tsx` (L1–L60) | `DirectorPostulaciones` (default, L13–L59)<br>`BadgeEstado` (exportado, L8–L11) | Lista en una tabla ordenada por fecha de recepción (`sort` ascendente, L18–L20) las postulaciones del semillero del director, marcando con insignia `Nueva` las no revisadas (L46). Además exporta `BadgeEstado` para representar visualmente el estado (`Aceptada`, `Rechazada`, `Retirada`, `Enviada`). | • `DirectorPostulaciones`: importado en `src/App.tsx` (L14) y usado en `src/App.tsx` (L37: `<Route path="/director/postulaciones" ... />`).<br>• `BadgeEstado`: importado y usado en `src/pages/DirectorPostulacionDetalle.tsx` (import L7; uso L32), `src/pages/DirectorPostulaciones.tsx` (uso L49) y `src/pages/MiCuenta.tsx` (import L9; uso L160). |
-| `src/pages/Evaluacion.tsx` (L1–L86) | `Evaluacion` (default, L38–L85) | Tabla interactiva de las 22 historias de usuario Must del MVP (`FILAS`, L13–L36): al pulsar «Abrir» en cualquier fila, autentica automáticamente la cuenta de demostración requerida (`loginAs` o `logout`, L42–L49) y navega a la pantalla donde se verifica esa historia. | **Importado en:** `src/App.tsx` (L18: `import Evaluacion from './pages/Evaluacion'`).<br>**Usado en:** `src/App.tsx` (L28: `<Route path="/evaluacion" element={<Evaluacion />} />`). |
-| `src/pages/Explorar.tsx` (L1–L170) | `Explorar` (default, L12–L169) | Pantalla principal del catálogo público de semilleros: incluye buscador en tiempo real por palabra clave sincronizado con el query param `?q=` (L67–L96), filtro por 10 áreas temáticas (`?area=`, L97–L110), contador de resultados en orden alfabético (L113–L120), grilla responsiva de tarjetas `<TarjetaSemillero />` paginadas de a 20 por página (`POR_PAGINA = 20`, L10 y L138–L145) y controles de paginación (L147–L167). | **Importado en:** `src/App.tsx` (L5: `import Explorar from './pages/Explorar'`).<br>**Usado en:** `src/App.tsx` (L24: `<Route path="/" element={<Explorar />} />`). |
-| `src/pages/Ficha.tsx` (L1–L139) | `Ficha` (default, L23–L138)<br>*Internos:* `Dato` (L9–L19), `SinInfo` (L21) | Vista pública de detalle de un semillero: presenta migas de pan (L47–L49), título y `<SelloFicha />` (L55–L62), lista descriptiva `<dl>` con los 7 datos del semillero y contacto autorizado (L65–L96), panel lateral `<aside>` con el estado de la convocatoria, cupos y botón «Quiero unirme» o «Administrar convocatoria» (L98–L124), y hasta 4 semilleros relacionados de la misma área (L35 y L127–L136). | **Importado en:** `src/App.tsx` (L6: `import Ficha from './pages/Ficha'`).<br>**Usado en:** `src/App.tsx` (L25: `<Route path="/semilleros/:id" element={<Ficha />} />`). |
-| `src/pages/Ingresar.tsx` (L1–L134) | `Ingresar` (default, L21–L133)<br>*Interna:* `destinoSeguro` (L16–L19) | Flujo de autenticación en dos pasos: primero presenta el «Aviso de privacidad (v1.0)» conforme a la Ley 1581 de 2012 (L61–L77) y luego habilita el inicio de sesión con Google institucional (`@unal.edu.co`, L78–L98) mediante un diálogo selector de cuentas de demostración o ingreso manual con validación de dominio (L100–L131). | **Importado en:** `src/App.tsx` (L7: `import Ingresar from './pages/Ingresar'`).<br>**Usado en:** `src/App.tsx` (L26: `<Route path="/ingresar" element={<Ingresar />} />`). |
-| `src/pages/MiCuenta.tsx` (L1–L280) | `MiCuenta` (default, L24–L279) | Centro de privacidad y datos del estudiante estructurado en 4 pestañas (`role="tablist"`, L58–L70): «Mis datos» (consulta y edición de nombre, programa y semestre; correo bloqueado, L72–L141), «Mis postulaciones» (historial y retiro de postulaciones abiertas, L143–L169 y L216–L229), «Autorizaciones» (consulta, historial de eventos y revocación con diálogo, L171–L206 y L231–L250) y «Eliminar perfil» (borrado definitivo previa confirmación escribiendo `ELIMINAR`, L208–L214 y L252–L277). | **Importado en:** `src/App.tsx` (L10: `import MiCuenta from './pages/MiCuenta'`).<br>**Usado en:** `src/App.tsx` (L32: `<Route path="/mi-cuenta" element={<RequireRole roles={['estudiante']}><MiCuenta /></RequireRole>} />`). |
-| `src/pages/Postular.tsx` (L1–L205) | `Postular` (default, L34–L204)<br>*Interno:* `Pasos` (L13–L32) | Asistente paso a paso para postularse a un semillero: verifica si ya existe una postulación activa (L57 y L86–L90) y guía al estudiante por el Paso 1 (declaración de mayoría de edad, L99–L115), Paso 2 (autorización obligatoria de datos para postulación y opcional para avisos, L117–L147) y Paso 3 (formulario validado con contador de 500 caracteres y advertencia de no incluir datos sensibles, L149–L200). | **Importado en:** `src/App.tsx` (L8: `import Postular from './pages/Postular'`).<br>**Usado en:** `src/App.tsx` (L30: `<Route path="/postular/:id" element={<RequireRole roles={['estudiante']}><Postular /></RequireRole>} />`). |
-| `src/pages/Tablero.tsx` (L1–L109) | `Tablero` (default, L22–L108)<br>*Interno:* `Progreso` (L13–L20) | Cuadro de mando analítico para la Vicedecanatura con tres indicadores agregados sin datos personales (L48): (1) crecimiento porcentual de postulaciones entre semestres con gráfico de barras en `recharts` (`BarChart`, L51–L76), (2) porcentaje de fichas verificadas y listado de fichas con más de 6 meses sin actualizar (L78–L90), y (3) porcentaje de postulaciones con autorización vigente (L92–L105). | **Importado en:** `src/App.tsx` (L16: `import Tablero from './pages/Tablero'`).<br>**Usado en:** `src/App.tsx` (L40: `<Route path="/vicedecanatura/tablero" element={<RequireRole roles={['vicedecanatura']}><Tablero /></RequireRole>} />`). |
+| `/` | `Explorar` | Todos | Catálogo con áreas temáticas, búsqueda con sugerencias mientras se escribe, filtros activos, semilleros relacionados si no hay resultados y paginación de 20. |
+| `/semilleros/:id` | `Ficha` | Todos | Datos del semillero, página web, contacto autorizado (con botón de WhatsApp), convocatoria y semilleros relacionados. |
+| `/ingresar` | `Ingresar` | Visitante | Aviso de privacidad v1.0 e inicio de sesión simulado con Google; rechaza correos fuera de `@unal.edu.co`. |
+| `/como-funciona` | `ComoFunciona` | Todos | Los cuatro pasos para postularse. |
+| `/evaluacion` | `Evaluacion` | Todos | Las 22 historias Must con su pantalla; «Abrir» inicia sesión con la cuenta adecuada y navega. |
+| `/postular/:id` | `Postular` | Estudiante | Postulación en tres pasos: mayoría de edad, autorización de datos y formulario. |
+| `/postulacion/:numero` | `Confirmacion` | Estudiante | Comprobante con número de postulación. |
+| `/mi-cuenta` | `MiCuenta` | Estudiante | Cuatro pestañas: mis datos, mis postulaciones, autorizaciones y eliminar perfil. |
+| `/director` | `DirectorPanel` | Director | Resumen de ficha, convocatoria y postulaciones nuevas. |
+| `/director/ficha` | `DirectorFicha` | Director | Verificar la ficha precargada y editarla (incluye página web, logo y WhatsApp). |
+| `/director/convocatoria` | `DirectorConvocatoria` | Director | Abrir o cerrar la convocatoria, fecha de cierre y cupos. |
+| `/director/postulaciones` | `DirectorPostulaciones` | Director | Tabla de postulaciones recibidas, con las nuevas marcadas. |
+| `/director/postulaciones/:id` | `DirectorPostulacionDetalle` | Director | Detalle y decisión (aceptar o rechazar) con confirmación. |
+| `/vicedecanatura/tablero` | `Tablero` | Vicedecanatura | Indicadores agregados: crecimiento de postulaciones, fichas verificadas y postulaciones con autorización. |
+| `*` | `NoPermiso` | Todos | Página inexistente. |
 
-#### 2.1.3 Elementos visuales e interactivos que se repiten
+#### 2.1.4 Elementos que se repiten
 
-El sistema evita la duplicación de estilos combinando clases utilitarias declaradas en `@layer components` dentro de `src/index.css` (L17–L27) y componentes reutilizables en `src/components/UI.tsx` y `src/components/Semillero.tsx`:
-
-1. **Botones (`.btn`, `.btn-primary`, `.btn-verde`, `.btn-outline`, `.btn-danger` en `src/index.css`, L19–L23):**
-   - `.btn-primary` (fondo verde oscuro institucional `#466B3F`): usado para la acción principal en `NoPermiso.tsx` (L10), `ComoFunciona.tsx` (L23), `Confirmacion.tsx` (L26), `DirectorConvocatoria.tsx` (L60), `DirectorFicha.tsx` (L82, L110, L129, L143), `DirectorPanel.tsx` (L30), `DirectorPostulacionDetalle.tsx` (L64, L84), `Explorar.tsx` (L93, L128), `Ficha.tsx` (L106), `Ingresar.tsx` (L76, L126), `MiCuenta.tsx` (L120), `Postular.tsx` (L113, L137, L197).
-   - `.btn-outline` (borde gris oscuro sobre fondo blanco): usado para acciones secundarias, cancelar o regresar en `A11yPanel.tsx` (L46–L48), `DemoPanel.tsx` (L87), `Confirmacion.tsx` (L27), `DirectorConvocatoria.tsx` (L77), `DirectorFicha.tsx` (L111, L142), `DirectorPanel.tsx` (L39, L46), `DirectorPostulacionDetalle.tsx` (L83), `Explorar.tsx` (L149, L163), `Ficha.tsx` (L109, L120), `Ingresar.tsx` (L87, L88, L93, L101), `MiCuenta.tsx` (L76, L119, L161, L187, L222, L237, L258), `Postular.tsx` (L196).
-   - `.btn-danger` (fondo rojo `#A61C31`): reservado para acciones destructivas o de rechazo en `DirectorConvocatoria.tsx` (L67, L78), `DirectorPostulacionDetalle.tsx` (L63, L84), `MiCuenta.tsx` (L212, L223, L238, L260).
-   - `.btn-verde` (fondo verde claro `#94B43B`): usado en el encabezado para «Iniciar sesión» (`Header.tsx`, L230).
-2. **Tarjetas (`.card` en `src/index.css`, L24, y `<TarjetaSemillero />` en `src/components/Semillero.tsx`, L51–L66):**
-   - La clase `.card` (`rounded border border-unal-gris-claro/70 bg-white p-5`) envuelve contenedores de información y formularios en `Semillero.tsx` (L55), `ComoFunciona.tsx` (L17), `Confirmacion.tsx` (L19), `DirectorConvocatoria.tsx` (L33), `DirectorFicha.tsx` (L45), `DirectorPanel.tsx` (L24, L33, L42), `DirectorPostulacionDetalle.tsx` (L42), `DirectorPostulaciones.tsx` (L28, L30), `Evaluacion.tsx` (L56), `Explorar.tsx` (L73, L123), `Ficha.tsx` (L65, L98), `Ingresar.tsx` (L62, L79), `MiCuenta.tsx` (L73, L147, L153, L175, L179, L196, L209), `Postular.tsx` (L100, L118, L150) y `Tablero.tsx` (L51, L78, L92).
-   - `<TarjetaSemillero />` se repite en las grillas de `Explorar.tsx` (L141) y de semilleros relacionados en `Ficha.tsx` (L132).
-3. **Formularios y controles de entrada (`<Campo />` en `src/components/UI.tsx`, L102–L129; `.input` y `.label` en `src/index.css`, L25–L26):**
-   - `<Campo />` estandariza etiquetas `<label className="label">`, ayudas (`hint`) y errores (`role="alert"`) en `DirectorConvocatoria.tsx` (L52–L57), `DirectorFicha.tsx` (L48–L58) y `Postular.tsx` (L152–L193).
-   - Las clases `.input` y `.label` también se aplican directamente en los formularios de `Explorar.tsx` (L75, L90), `Ingresar.tsx` (L123, L125), `DirectorFicha.tsx` (L65–L74) y `MiCuenta.tsx` (L94–L116, L274–L275).
-4. **Modales de confirmación (`<Dialog />` en `src/components/UI.tsx`, L48–L87):**
-   - Se reutiliza en 7 flujos críticos: cerrar convocatoria anticipadamente (`DirectorConvocatoria.tsx`, L72), reclamar ficha precargada (`DirectorFicha.tsx`, L137), aceptar/rechazar postulación (`DirectorPostulacionDetalle.tsx`, L78), selector de cuenta institucional (`Ingresar.tsx`, L101), retirar postulación (`MiCuenta.tsx`, L217), revocar autorización (`MiCuenta.tsx`, L232) y eliminar perfil (`MiCuenta.tsx`, L253).
-5. **Insignias y alertas (`<Badge />`, `<BadgeConvocatoria />`, `<BadgeEstado />`, `<SelloFicha />`, `<Alerta />`):**
-   - Unifican la representación de estados de convocatoria, verificación de ficha, estado de postulaciones y mensajes de retroalimentación en todas las vistas.
+| Elemento | Implementación | Variantes y uso |
+| --- | --- | --- |
+| **Botones** | Clases `.btn-*` en `src/index.css` | `.btn-primary` (verde oscuro, acción principal; 12 archivos) · `.btn-outline` (secundaria, cancelar o volver; 13 archivos) · `.btn-danger` (rojo, acciones destructivas o de rechazo; 4 archivos) · `.btn-verde` (verde institucional, solo «Iniciar sesión» del header) |
+| **Tarjetas** | Clase `.card` y componente `TarjetaSemillero` | `.card` agrupa contenido y formularios en 15 archivos; `TarjetaSemillero` se repite en el catálogo, las sugerencias y los relacionados |
+| **Formularios** | Componente `Campo` y clases `.input` y `.label` | Postulación, edición de ficha, convocatoria, mis datos, inicio de sesión y búsqueda; los formularios largos usan además `useCambiosSinGuardar` |
+| **Diálogos de confirmación** | Componente `Dialog` | 8 flujos (ver 2.1.2), siempre con una acción segura y una principal |
+| **Indicadores de estado** | `Badge` y sus derivados | Convocatoria, verificación de ficha y estado de postulación con el mismo código de color: verde = positivo, gris = neutro, rojo = rechazo |
+| **Mensajes** | `Alerta` y `Toasts` | Errores con salida, confirmaciones y correos simulados |
 
 ---
 
-### 2.2 Diseño responsivo (Pantalla principal: Explorar)
+### 2.2 Diseño responsivo (pantalla principal: Explorar)
 
-El análisis responsivo se divide entre el componente de la página principal (`src/pages/Explorar.tsx`) y los componentes de estructura global (`Header.tsx`, `A11yPanel.tsx`, `Footer.tsx`) que se renderizan junto con ella a través de `src/components/Layout.tsx`.
+Se usan los puntos de quiebre de Tailwind: `sm` (640 px), `md` (768 px) y `lg` (1024 px). Por debajo de 640 px rige el diseño móvil.
 
-#### 2.2.1 Clases responsivas en `src/pages/Explorar.tsx`
+#### 2.2.1 Explorar (`src/pages/Explorar.tsx`)
 
-| Elemento en `Explorar.tsx` | Línea | Clases de Tailwind verificadas | Comportamiento en Mobile (`< 640px`) vs. Desktop (`sm: >= 640px`, `lg: >= 1024px`) |
+| Elemento | Clases | Móvil (< 640 px) | Escritorio |
 | --- | --- | --- | --- |
-| Indicador «Orden alfabético» | L119 | `hidden sm:block` | **Mobile:** Permanece oculto (`hidden`) para despejar la barra de estado junto al contador de resultados.<br>**Desktop (`sm:` >= 640px):** Se muestra como bloque (`sm:block`) alineado a la derecha del contador. |
-| Grilla de tarjetas de semilleros (`<ul>`) | L138 | `mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3` | **Mobile (`< 640px`):** Muestra **1 tarjeta por fila** (`grid gap-4` en una sola columna).<br>**Tablet / Desktop pequeño (`sm:` >= 640px):** Cambia a **2 columnas** (`sm:grid-cols-2`).<br>**Desktop amplio (`lg:` >= 1024px):** Cambia a **3 columnas** (`lg:grid-cols-3`). |
-| Contenedor principal, filtros de área y paginación | L47, L78, L98, L148 | `mx-auto max-w-6xl px-4 py-8` (L47)<br>`flex gap-2` / `relative flex-1` (L78–L79)<br>`flex flex-wrap gap-2` (L98)<br>`flex flex-wrap items-center justify-center gap-2` (L148) | Se adaptan de forma fluida sin prefijos de breakpoint: el contenedor limita el ancho a `max-w-6xl` con relleno horizontal `px-4`, el campo de búsqueda se estira con `flex-1`, y tanto los botones de áreas temáticas como los de paginación hacen salto de línea automático en pantallas angostas gracias a `flex-wrap`. |
+| Grilla de semilleros | `grid gap-4 sm:grid-cols-2 lg:grid-cols-3` | 1 tarjeta por fila | 2 columnas desde 640 px y 3 desde 1024 px |
+| Sugerencias sin resultados | `grid gap-3 sm:grid-cols-2` | 1 por fila | 2 columnas |
+| Texto «Orden alfabético» | `hidden sm:block` | Oculto, para dejar espacio al contador | Visible a la derecha del contador |
+| Contenedor | `mx-auto max-w-6xl px-4` | Ocupa todo el ancho con margen de 16 px | Se centra con un ancho máximo |
+| Búsqueda | `flex gap-2` y `relative flex-1` | El campo se encoge y el botón «Buscar» conserva su tamaño | Campo ancho |
+| Áreas temáticas, filtros activos y paginación | `flex flex-wrap gap-2` | Bajan a la línea siguiente | Caben en una o dos líneas |
 
-#### 2.2.2 Clases responsivas en el `Layout` que enmarca la pantalla principal (`Header.tsx`, `A11yPanel.tsx`, `Footer.tsx`)
+#### 2.2.2 Marco común (`Header`, `A11yPanel`, `Footer`)
 
-| Archivo y línea | Elemento | Clases de Tailwind verificadas | Qué cambia entre Mobile y Desktop |
+| Componente | Clases | Móvil | Escritorio |
 | --- | --- | --- | --- |
-| `src/components/Header.tsx` (L111) | Barra superior institucional (`Aspirantes`, `Estudiantes`, redes, idioma) | `hidden h-8 ... md:block` | Oculta en móvil (`hidden`); visible únicamente desde `md:` (`>= 768px`). |
-| `src/components/Header.tsx` (L135, L140, L141) | Escudo UNAL (`Marca`) y relleno izquierdo de la barra principal | `hidden ... md:flex md:-translate-y-8` (L135)<br>`md:pl-[260px] md:pr-4` (L140)<br>`shrink-0 md:hidden` (L141) | En móvil se oculta el escudo saliente de `236px × 116px` y se muestra `<Marca compacto />` (`md:hidden`, L141–L142). En `md:` (`>= 768px`) aparece el bloque flotante izquierdo (`md:flex md:-translate-y-8`) y el contenedor principal reserva `260px` a la izquierda (`md:pl-[260px]`). |
-| `src/components/Header.tsx` (L146, L152, L153) | Título del sitio y barra de navegación `<nav>` | `hidden items-center gap-2 md:flex` (L146)<br>`truncate text-sm font-semibold md:hidden` (L152)<br>`mt-2 hidden md:block` (L153) | En móvil se muestra el título abreviado «Atlas · Semilleros» (`md:hidden`) y se oculta la navegación horizontal. En `md:` se muestra el título completo «Atlas · Semilleros de Ingeniería» con ícono `MapPin` y la lista horizontal de enlaces (`md:block`). |
-| `src/components/Header.tsx` (L176) | Buscador rápido del encabezado | `hidden ... lg:flex` | Oculto en móvil y tablet; solo se muestra integrado en la barra superior en pantallas grandes (`lg: >= 1024px`). En móvil se incluye dentro del menú desplegable (L246). |
-| `src/components/Header.tsx` (L235, L239, L245) | Sello de Colombia, botón hamburguesa y panel móvil | `hidden shrink-0 md:block` (L235)<br>`... md:hidden` (L239, L245) | En `md:` se muestra el escudo de Colombia (`md:block`) y se ocultan tanto el botón de menú hamburguesa como el panel colapsable (`md:hidden`). |
-| `src/components/A11yPanel.tsx` (L36) | Texto del botón flotante de accesibilidad | `hidden items-center px-4 sm:flex` | En móvil solo se ve el ícono azul de accesibilidad (`40px × 40px`); desde `sm:` (`>= 640px`) se despliega la etiqueta «Panel de Accesibilidad» (`sm:flex`). |
-| `src/components/Footer.tsx` (L18, L36, L44, L52) | Cuadrícula del pie de página institucional | `sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_1.6fr_1.1fr_auto]` (L18)<br>`sm:col-span-2 lg:col-span-1 lg:border-l ... lg:pl-6` (L36) | Pasa de 1 columna en móvil a 2 columnas en `sm:` y a 7 columnas asimétricas con separadores verticales (`lg:border-l`) en `lg:`. |
+| Barra de perfiles y redes | `hidden md:block` | Oculta | Visible desde 768 px |
+| Escudo UNAL | `hidden md:flex` / `md:hidden` | Versión compacta junto al nombre corto «Atlas · Semilleros» | Bloque oscuro que sobresale, con el nombre completo |
+| Menú principal | `hidden md:block` | Se reemplaza por el botón hamburguesa (`md:hidden`) | Menú horizontal |
+| Sello de Colombia | `hidden md:block` | Oculto | Visible |
+| Panel de Accesibilidad | `hidden sm:flex` en el texto | Solo el icono | Icono y texto |
+| Pie de página | `sm:grid-cols-2 lg:grid-cols-[…]` | 1 columna | 2 columnas desde 640 px y 7 con separadores desde 1024 px |
 
-#### 2.2.3 Evidencias visuales (Desktop vs. Mobile)
+#### 2.2.3 Evidencia visual
 
-| Vista Desktop (`lg:` >= 1024px) | Vista Mobile (`< 640px`) |
+Capturas de la versión actual: escritorio a 1440 × 900 px y móvil a 390 px de ancho (iPhone 14), con la página desplazada hasta las primeras tarjetas.
+
+| Escritorio (1440 px) | Móvil (390 px) |
 | :---: | :---: |
-| <img src="./docs/img/explorar-desktop.png" alt="Explorar en escritorio" width="600" /> | <img src="./docs/img/explorar-mobile.png" alt="Explorar en móvil" width="260" /> |
+| <img src="./docs/img/explorar-desktop.png" alt="Explorar en escritorio: grilla de 3 columnas y menú horizontal" width="600" /> | <img src="./docs/img/explorar-mobile.png" alt="Explorar en móvil: una tarjeta por fila y menú hamburguesa" width="260" /> |
 
 ---
 
 ### 2.3 Heurísticas de usabilidad de Jakob Nielsen
 
-A continuación se documentan **8 heurísticas de Nielsen** verificadas con fragmentos textuales del código fuente:
+Se documentan **8 de las 10 heurísticas**, cada una con evidencia del código actual.
 
 #### 1. Visibilidad del estado del sistema
-El sistema informa en todo momento qué está ocurriendo mediante indicadores de paso actual, insignias de estado, contadores en vivo y notificaciones emergentes (`aria-live="polite"`).
 
-- **Evidencia 1 — Barra de progreso por pasos en la postulación (`src/pages/Postular.tsx`, L13–L31):**
+La interfaz informa en qué paso está el usuario, cuántos resultados hay y qué acaba de pasar.
+
+- **Progreso de la postulación** (`Postular.tsx`): marca el paso actual, los terminados con ✓ y lo anuncia con `aria-current="step"`.
 ```tsx
-function Pasos({ actual }: { actual: 1 | 2 | 3 }) {
-  const items = ['Mayoría de edad', 'Autorización de datos', 'Formulario']
-  return (
-    <ol className="mb-6 flex flex-wrap gap-2 text-sm font-semibold" aria-label="Progreso de la postulación">
-      {items.map((t, i) => {
-        const n = (i + 1) as 1 | 2 | 3
-        const hecho = n < actual
-        return (
-          <li
-            key={t}
-            aria-current={n === actual ? 'step' : undefined}
-            className={clsx('flex items-center gap-2 rounded px-3 py-1', n === actual ? 'bg-unal-verde-oscuro text-white' : hecho ? 'bg-unal-verde/40' : 'bg-unal-gris-claro/50')}
-          >
-            {hecho ? <Check size={14} /> : <span>{n}.</span>} {t}
-          </li>
-        )
-      })}
-    </ol>
-  )
-}
+<li
+  key={t}
+  aria-current={n === actual ? 'step' : undefined}
+  className={clsx('flex items-center gap-2 border-b-4 pb-1', n === actual ? 'border-unal-verde-oscuro text-unal-verde-oscuro' : hecho ? 'border-unal-verde text-unal-texto' : 'border-transparent text-unal-gris-oscuro')}
+>
+  {hecho ? <Check size={14} /> : <span>{n}.</span>} {t}
+</li>
 ```
-- **Evidencia 2 — Notificaciones temporales y contador dinámico de resultados (`src/components/UI.tsx`, L89–L100 y `src/pages/Explorar.tsx`, L113–L118):**
+- **Contador de resultados en vivo** (`Explorar.tsx`): se actualiza mientras se escribe y lo anuncian los lectores de pantalla (`aria-live`).
 ```tsx
-export function Toasts() {
-  const { toasts } = useStore()
-  return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[80] flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2" aria-live="polite">
-      {toasts.map((t) => (
-        <div key={t.id} role="status" className="pointer-events-auto rounded border-l-4 border-unal-verde bg-unal-gris-oscuro px-4 py-3 text-sm text-white shadow-lg">
-          {t.texto}
-        </div>
-      ))}
-    </div>
-  )
-}
+<div className="mt-3 flex items-center justify-between text-sm text-unal-gris-oscuro" aria-live="polite">
+  <p data-testid="contador">
+    {filtrados.length === 0
+      ? '0 semilleros'
+      : `Mostrando ${desde + 1}–${desde + visibles.length} de ${filtrados.length} semilleros`}
+  </p>
 ```
+- **Avisos temporales** (`UI.tsx`, `Toasts`): confirman acciones como «Correo enviado a…».
 
 #### 2. Correspondencia entre el sistema y el mundo real
-La interfaz emplea el lenguaje institucional y normativo propio de la Universidad Nacional de Colombia (sistema Hermes, Vicedecanatura de Investigación y Extensión, programas curriculares reales, Ley 1581 de 2012) y formatea las fechas en español (`dd/mm/aaaa`).
 
-- **Evidencia 1 — Terminología institucional y referencia a Hermes (`src/components/Semillero.tsx`, L20–L25):**
+Usa el lenguaje de la universidad (Hermes, Vicedecanatura de Investigación y Extensión, programas curriculares, Ley 1581 de 2012) y fechas en formato colombiano (`dd/mm/aaaa`).
+
+- **Origen de la ficha** (`Semillero.tsx`, `SelloFicha`): explica que una ficha precargada viene de Hermes y aún no la confirma el director.
 ```tsx
-    <span className="inline-flex flex-wrap items-center gap-2 text-sm">
-      <Badge tone="gris" title="Información tomada de fuentes públicas de Hermes; aún no confirmada por el director">
-        <FileClock size={12} /> Precargada
-      </Badge>
-      <span className="text-unal-gris-oscuro">Actualizada el {fmtFecha(s.actualizadoEn)}</span>
-    </span>
+<Badge tone="gris" punto={false} title="Información tomada de fuentes públicas de Hermes; aún no confirmada por el director">
+  <FileClock size={14} aria-hidden /> Precargada
+</Badge>
 ```
-- **Evidencia 2 — Formato de fecha y hora local y comparación alfabética en español (`src/lib/utils.ts`, L20–L33 y L60–L62):**
+- **Fechas** (`lib/utils.ts`):
 ```ts
 export function fmtFecha(iso: string): string {
   const [datePart] = iso.split('T')
@@ -161,50 +375,53 @@ export function fmtFecha(iso: string): string {
 ```
 
 #### 3. Control y libertad del usuario
-Los usuarios disponen de salidas claras («Cancelar», «Volver», cierre con tecla `Escape`) y pueden revertir decisiones importantes como retirar una postulación enviada o revocar una autorización de tratamiento de datos.
 
-- **Evidencia 1 — Retiro de postulación abierta y revocación de autorizaciones (`src/pages/MiCuenta.tsx`, L160–L162 y L186–L190):**
+Hay salida en cada flujo: «Cancelar» en los formularios, aviso antes de perder cambios, cierre de diálogos con Escape y acciones reversibles (retirar una postulación, revocar una autorización).
+
+- **Aviso de cambios sin guardar** (`CambiosSinGuardar.tsx`): si el usuario intenta salir de un formulario modificado, puede seguir editando o salir sin guardar.
 ```tsx
-<BadgeEstado e={p.estado} />
+<Dialog
+  titulo="Tienes cambios sin guardar"
+  onClose={() => blocker.reset()}
+  acciones={
+    <>
+      <button className="btn-outline" onClick={() => blocker.reset()}>Seguir editando</button>
+      <button className="btn-danger" onClick={() => blocker.proceed()}>Salir sin guardar</button>
+    </>
+  }
+>
+```
+- **Retirar una postulación enviada** (`MiCuenta.tsx`):
+```tsx
 {p.estado === 'Enviada' && <button className="btn-outline" onClick={() => setRetirando(p.id)}>Retirar postulación</button>}
 ```
-- **Evidencia 2 — Cierre de modales con tecla `Escape` y devolución del foco (`src/components/UI.tsx`, L62–L72):**
-```tsx
-  useEffect(() => {
-    // Se ejecuta una sola vez al abrir: el foco va al diálogo y se devuelve al cerrar.
-    const prev = document.activeElement as HTMLElement | null
-    ref.current?.focus()
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && cerrarRef.current()
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      prev?.focus?.()
-    }
-  }, [])
-```
+- **Volver a los resultados** (`Ficha.tsx`): la ficha recuerda la búsqueda, el filtro y la página de origen.
 
 #### 4. Consistencia y estándares
-Todo el proyecto utiliza una paleta institucional única en `tailwind.config.js` (`unal-verde`, `unal-verde-oscuro`, `unal-rojo`, `unal-vino`, `unal-header`, `unal-footer`, L6–L18), clases de componentes estandarizadas en `src/index.css` (L17–L27) y el encabezado/pie oficial de la UNAL.
 
-- **Evidencia — Sistema de clases reutilizables en `src/index.css` (L17–L27):**
+Una sola paleta institucional (`tailwind.config.js`), las mismas clases para cada tipo de botón, tarjeta y campo, y el encabezado y pie oficiales de la UNAL.
+
+- **Clases compartidas** (`src/index.css`):
 ```css
 @layer components {
-  .section-title { @apply text-sm font-bold uppercase tracking-[0.18em] text-unal-texto; }
+  .section-title { @apply text-xl font-semibold leading-snug text-unal-texto; }
   .btn { @apply inline-flex items-center justify-center gap-2 rounded px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50; }
   .btn-primary { @apply btn bg-unal-verde-oscuro text-white hover:bg-[#3a5a34]; }
   .btn-verde { @apply btn bg-unal-verde text-unal-texto hover:bg-[#86a534]; }
   .btn-outline { @apply btn border border-unal-gris-oscuro bg-white text-unal-texto hover:bg-gray-100; }
   .btn-danger { @apply btn bg-unal-rojo text-white hover:bg-[#8e1829]; }
   .card { @apply rounded border border-unal-gris-claro/70 bg-white p-5; }
-  .input { @apply w-full rounded border border-unal-gris-claro bg-white px-3 py-2 text-sm placeholder:text-gray-400; }
+  .input { @apply w-full rounded border border-unal-gris-oscuro bg-white px-3 py-2 text-sm placeholder:text-gray-500; }
   .label { @apply mb-1 block text-sm font-semibold; }
 }
 ```
+- El rojo se reserva para acciones destructivas y errores, y el verde para la acción principal, en todas las pantallas.
 
 #### 5. Prevención de errores
-El sistema previene acciones inválidas o accidentales deshabilitando botones hasta cumplir condiciones previas, bloqueando la edición del correo institucional (`readOnly`), impidiendo publicar teléfonos sin consentimiento activo, exigiendo confirmación escrita (`ELIMINAR`) antes de borrar el perfil y bloqueando aceptaciones cuando no hay cupos.
 
-- **Evidencia 1 — Confirmación explícita escribiendo `ELIMINAR` antes de borrar el perfil (`src/pages/MiCuenta.tsx`, L259–L265 y L274–L275):**
+Se deshabilitan las acciones que no proceden, se pide confirmación antes de lo irreversible y se advierte antes de que el usuario cometa el error.
+
+- **Confirmación escrita para eliminar el perfil** (`MiCuenta.tsx`):
 ```tsx
 <button
   className="btn-danger"
@@ -214,28 +431,20 @@ El sistema previene acciones inválidas o accidentales deshabilitando botones ha
   Eliminar definitivamente
 </button>
 ```
-- **Evidencia 2 — Bloqueo del botón «Aceptar» cuando los cupos de la convocatoria están llenos (`src/pages/DirectorPostulacionDetalle.tsx`, L25 y L61–L71):**
+- **No se puede aceptar sin cupos** (`DirectorPostulacionDetalle.tsx`), y se explica cómo resolverlo:
 ```tsx
-const sinCupos = s.convocatoria.aceptados >= s.convocatoria.cupos
-// ...
-{p.estado === 'Enviada' && (
-  <div className="mt-6 flex flex-wrap justify-end gap-3">
-    <button className="btn-danger" onClick={() => setConfirmar('Rechazada')}>Rechazar</button>
-    <button className="btn-primary" disabled={sinCupos} onClick={() => setConfirmar('Aceptada')}>Aceptar</button>
-  </div>
+<button className="btn-primary" disabled={sinCupos} onClick={() => setConfirmar('Aceptada')}>Aceptar</button>
+// …
+{p.estado === 'Enviada' && sinCupos && (
+  <p className="mt-2 text-right text-sm text-unal-gris-oscuro" role="note">
+    No puedes aceptar: los cupos están llenos. Aumenta los cupos en <Link to="/director/convocatoria">Convocatoria</Link> para aceptar más postulaciones.
+  </p>
 )}
 ```
-- **Evidencia 3 — Límite de caracteres (`maxLength={500}`) y advertencia preventiva sobre datos sensibles (`src/pages/Postular.tsx`, L180–L192):**
+- **Límite de caracteres y advertencia sobre datos sensibles** (`Postular.tsx`):
 ```tsx
-<textarea
-  id="f-msg"
-  rows={5}
-  maxLength={MAX_MENSAJE}
-  value={form.mensaje}
-  onChange={(e) => set('mensaje', e.target.value.slice(0, MAX_MENSAJE))}
-  className="input"
-  aria-describedby="msg-ayuda"
-/>
+<textarea id="f-msg" rows={5} maxLength={MAX_MENSAJE} value={form.mensaje}
+  onChange={(e) => set('mensaje', e.target.value.slice(0, MAX_MENSAJE))} className="input" aria-describedby="msg-ayuda" />
 <div id="msg-ayuda" className="mt-1 flex flex-wrap justify-between gap-2 text-xs">
   <span className="text-unal-gris-oscuro">No incluyas datos sensibles (salud, religión, origen étnico, orientación sexual, situación económica).</span>
   <span data-testid="contador-mensaje" className="font-semibold">{form.mensaje.length}/{MAX_MENSAJE}</span>
@@ -243,64 +452,55 @@ const sinCupos = s.convocatoria.aceptados >= s.convocatoria.cupos
 ```
 
 #### 6. Reconocimiento antes que recuerdo
-En lugar de obligar al usuario a recordar opciones o términos buscados, la interfaz prellena el formulario de postulación con los datos del perfil/sesión, ofrece listas cerradas (`<select>`) de programas curriculares y disponibilidad, resalta visualmente con `<mark>` el término buscado en las tarjetas y muestra migas de pan (`Ruta de navegación`).
 
-- **Evidencia 1 — Prellenado de datos del estudiante y listas `<select>` (`src/pages/Postular.tsx`, L43–L49 y L159–L164):**
+El usuario elige en lugar de recordar: el formulario llega prellenado, los programas y la disponibilidad son listas cerradas, el término buscado se resalta y los filtros activos quedan a la vista.
+
+- **Prellenado con los datos del perfil** (`Postular.tsx`):
 ```tsx
-  const [form, setForm] = useState({
-    nombre: perfil?.nombre ?? sesion?.nombre ?? '',
-    programa: perfil?.programa ?? '',
-    semestre: perfil?.semestre ?? '',
-    disponibilidad: '',
-    mensaje: '',
-  })
+const [form, setForm] = useState({
+  nombre: perfil?.nombre ?? sesion?.nombre ?? '',
+  programa: perfil?.programa ?? '',
+  semestre: perfil?.semestre ?? '',
+  disponibilidad: '',
+  mensaje: '',
+})
 ```
-- **Evidencia 2 — Resaltado visual de términos de búsqueda en las tarjetas (`src/components/Semillero.tsx`, L42–L48):**
+- **Sugerencias mientras se escribe** (`Explorar.tsx`): desde la segunda letra se proponen áreas, semilleros y líneas, para que el usuario reconozca lo que existe en vez de adivinar términos.
+- **Filtros activos visibles y removibles** (`Explorar.tsx`): «Filtros activos: «robótica» × · Robótica y control ×».
+- **Resaltado del término buscado** (`Semillero.tsx`, `Resaltar`):
 ```tsx
-  return (
-    <>
-      {texto.slice(0, i)}
-      <mark className="bg-unal-verde/40 px-0.5">{texto.slice(i, i + nq.length)}</mark>
-      {texto.slice(i + nq.length)}
-    </>
-  )
+<mark className="bg-unal-verde/40 px-0.5">{texto.slice(i, i + nq.length)}</mark>
 ```
 
-#### 7. Ayuda a los usuarios a reconocer, diagnosticar y recuperarse de errores
-Los mensajes de error están redactados en lenguaje claro, indican exactamente cuál fue el problema y ofrecen enlaces o botones de acción inmediata para resolverlo.
+#### 7. Ayudar a reconocer, diagnosticar y recuperarse de errores
 
-- **Evidencia 1 — Recuperación ante intento de ingreso con correo fuera del dominio `@unal.edu.co` (`src/pages/Ingresar.tsx`, L82–L91):**
-```tsx
-{rechazo && (
-  <div className="mb-4">
-    <Alerta tono="error">
-      <p className="font-semibold">Solo puedes entrar con tu correo @unal.edu.co</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button className="btn-outline" onClick={() => { setRechazo(false); setSelector(true) }}>Intentar con otra cuenta</button>
-        <Link to="/" className="btn-outline">Volver al catálogo</Link>
-      </div>
-    </Alerta>
-  </div>
-)}
-```
-- **Evidencia 2 — Recuperación cuando el correo no coincide al reclamar una ficha precargada (`src/pages/DirectorFicha.tsx`, L104–L113):**
+Los mensajes dicen qué pasó y ofrecen una salida inmediata.
+
+- **Correo fuera del dominio institucional** (`Ingresar.tsx`):
 ```tsx
 <Alerta tono="error">
-  <p className="font-semibold">Tu correo no coincide con el del director de esta ficha.</p>
-  <p className="mt-2 text-unal-texto">
-    Solo el director registrado puede reclamarla. Si crees que hay un error, pide la corrección a la Vicedecanatura de Investigación y Extensión indicando el semillero «{s.nombre}» y tu correo institucional ({sesion.correo}).
-  </p>
-  <div className="mt-4 flex flex-wrap gap-2">
-    <a className="btn-primary" href={`mailto:${CORREO_VICE}?subject=${encodeURIComponent(`Corrección de ficha: ${s.nombre}`)}`}>Escribir a la Vicedecanatura</a>
-    <Link to={`/semilleros/${s.id}`} className="btn-outline">Volver a la ficha</Link>
+  <p className="font-semibold">Solo puedes entrar con tu correo @unal.edu.co</p>
+  <div className="mt-3 flex flex-wrap gap-2">
+    <button className="btn-outline" onClick={() => { setRechazo(false); setSelector(true) }}>Intentar con otra cuenta</button>
+    <Link to="/" className="btn-outline">Volver al catálogo</Link>
   </div>
 </Alerta>
 ```
+- **Ficha de otro director** (`DirectorFicha.tsx`): explica a quién pedir la corrección y abre el correo ya redactado.
+```tsx
+<p className="font-semibold">Tu correo no coincide con el del director de esta ficha.</p>
+<p className="mt-2 text-unal-texto">
+  Solo el director registrado puede verificarla. Si crees que hay un error, pide la corrección a la Vicedecanatura de Investigación y Extensión…
+</p>
+<a className="btn-primary" href={`mailto:${CORREO_VICE}?subject=${encodeURIComponent(`Corrección de ficha: ${s.nombre}`)}`}>Escribir a la Vicedecanatura</a>
+```
+- **Búsqueda sin resultados** (`Explorar.tsx`): en lugar de una pantalla vacía, propone hasta 4 semilleros relacionados y las áreas temáticas.
 
 #### 8. Ayuda y documentación
-El prototipo incorpora una página dedicada («Cómo funciona») con pasos concisos para nuevos usuarios, textos de ayuda contextuales (`hint`) en los campos y sugerencias de contacto cuando un director entra con rol de estudiante.
 
-- **Evidencia — Guía paso a paso en `src/pages/ComoFunciona.tsx` (L4–L9 y L14–L23):**
+Una página «Cómo funciona», textos de ayuda junto a los campos (`Campo` con `hint`) y orientación a un director que entra con un correo no asociado.
+
+- **Guía en cuatro pasos** (`ComoFunciona.tsx`):
 ```tsx
 const PASOS = [
   ['Explora', 'Revisa el catálogo de semilleros de Ingeniería sin iniciar sesión y busca por tema o palabra clave.'],
@@ -312,99 +512,172 @@ const PASOS = [
 
 ---
 
-> **Declaración de uso de IA:** Se solicitó realizar este análisis de código, inventario de componentes, revisión de diseño responsivo y verificación de heurísticas de Nielsen utilizando la herramienta de inteligencia artificial **Antigravity (Google DeepMind · modelo Gemini)** a partir de la inspección estática directa de los archivos en `src/`.
+> **Declaración de uso de IA:** El análisis de código, el inventario de componentes, la revisión del diseño responsivo y la verificación de las heurísticas de Nielsen de este módulo se realizaron con la herramienta de inteligencia artificial **Antigravity (Google DeepMind · modelo Gemini)**, a partir de la inspección de los archivos en `src/`.
+>
+> **Actualización con Claude (Anthropic).** Después de las correcciones de accesibilidad y de las pruebas con usuarios, el código cambió y el análisis original quedó desactualizado. Con Claude se actualizó esta sección contra el código vigente: se retiró el buscador del header (eliminado en `839f468`), se agregaron `CambiosSinGuardar` y el árbol de estructura del proyecto, se reemplazaron los fragmentos de código que habían cambiado (indicadores de estado, diálogo con foco atrapado, clases CSS, pasos de la postulación, verificación de ficha), se quitaron los números de línea para que las referencias no se rompan con cada cambio y se tomaron de nuevo las capturas de escritorio y móvil.
 
 ---
 ## Módulo III: QC de Usabilidad y Accesibilidad
 
-> Aspectos 2 y 3. El aspecto 1 (reporte RITE) está en `REPORTE DE VALIDACIÓN DE USABILIDAD.pdf` y `Prueba de prototipo - Atlas .xlsx`.
+### 3.1 Reporte de validación RITE
 
-### 3.2 Evidencia: problema detectado vs. cambio aplicado en el prototipo
+**Documentos completos:** [REPORTE DE VALIDACIÓN DE USABILIDAD.pdf](REPORTE%20DE%20VALIDACI%C3%93N%20DE%20USABILIDAD.pdf) · [Prueba de prototipo - Atlas .xlsx](Prueba%20de%20prototipo%20-%20Atlas%20.xlsx) (registros, cuestionario y cálculos)
 
-**Base.** Entre el 12 y el 15 de noviembre de 2026 se probó el prototipo desplegado (`atlas-sisinfo.vercel.app`) con 10 estudiantes de pregrado (U1–U11; el código U8 no se usó) y 1 docente director de semillero (TD1). Todos los estudiantes completaron las 4 tareas sin ayuda; el director necesitó ayuda en 2 de 4. La ficha RITE registró 8 hallazgos (P01–P08), ninguno de gravedad 4, con frase literal del usuario e hipótesis de solución. El cuestionario TAM puntuó entre 4,33 y 4,57 sobre 5 en sus cuatro constructos, y la correlación de Spearman entre clics y facilidad de uso percibida fue −0,74 (p = 0,014).
+**Videos de las sesiones:** [carpeta en Google Drive](https://drive.google.com/drive/folders/1zzHP633ZDwt_1zEWPy7KW0j9YW8DsSB1?usp=sharing)
 
-**Lo que falta para cumplir el aspecto 2.** La ficha RITE tiene la columna "Hipótesis de solución", pero no la columna que pide la entrega, "Cambio aplicado en el prototipo", y en los 8 hallazgos la casilla "¿Corregido antes del siguiente usuario?" dice **No**. El código en el commit `2919d85` (16 de noviembre) lo confirma: ninguna de las 8 hipótesis está implementada. Según la regla RITE del propio reporte, un hallazgo de gravedad 1 a 3 no obliga a corregir antes del siguiente usuario, así que el procedimiento fue correcto; pero el criterio "Validación con usuarios" (30 %) califica la **iteración**, y hoy no hay ninguna.
+#### 3.1.1 Diseño de la prueba
 
-**Tabla 3.2.** Las columnas "Cambio aplicado" y "Estado" quedan en *Pendiente* hasta que se implemente el cambio; cada fila indica el archivo exacto para hacerlo.
+| Aspecto | Detalle |
+|---|---|
+| Participantes | **11 usuarios reales** (el mínimo pedido es 2): 10 estudiantes de pregrado (U1 a U11; el código U8 no se asignó) y 1 docente director de semillero (D1). Los estudiantes cursaban octavo semestre, salvo uno de décimo, y 6 de los 10 habían participado antes en un semillero. |
+| Fechas | 12 y 15 de noviembre de 2026 |
+| Modalidad | Mixta: sesiones presenciales y remotas, sobre el prototipo desplegado (`atlas-sisinfo.vercel.app`) |
+| Consentimiento | Cada participante dio su consentimiento verbal, al inicio de la grabación, para ser grabado y para el uso de sus respuestas. Los participantes se identifican solo por código. |
+| Protocolo | Tareas sin pistas. Por tarea se registraron el tiempo, los clics y si el usuario necesitó ayuda; la ficha RITE recogió las frases literales. Al final, cada estudiante respondió un cuestionario Likert de 1 a 5. |
+| Regla RITE | Un hallazgo de gravedad 4 (catástrofe) se corrige antes del siguiente usuario; los de gravedad 1 a 3 se priorizan para la siguiente iteración. |
 
-| ID | Usuario · tarea | Problema detectado (resumen y cita) | Grav. | HU | Cambio aplicado en el prototipo | Dónde (archivo) | Estado |
-|---|---|---|---|---|---|---|---|
-| P01 | U2 · T1 | El campo de búsqueda conserva la consulta anterior; el usuario no sabe cómo empezar de nuevo. *"Que se eliminen las anteriores…"* | 2 | HU-02 | Botón "×" dentro del campo que borra el texto y el parámetro `q`, y devuelve el foco al campo. | `src/pages/Explorar.tsx` L75–L93 | Aplicado en commit 05c07b6 |
-| P02 | U4 · T1 | No sabe si buscar por tema o por nombre; la barra de búsqueda tiene más peso visual que las áreas. *"Que la barra sea algo secundario y no lo principal."* | 3 | HU-01, HU-02 | Mover "Áreas temáticas" arriba del campo de búsqueda y cambiar el texto de ejemplo a "Busca por tema, nombre o línea de investigación". | `src/pages/Explorar.tsx` L73–L110 | Pendiente |
-| P03 | U6 · T1 | Cree que al elegir un área se anula la palabra clave; los filtros quedan "abajo". *"Que cuando uno selecciona por área no invalide el filtro por palabra."* | 3 | HU-01, HU-02 | El código ya combina ambos filtros (`filtrados`, L33–L40), así que el problema es de **retroalimentación**: mostrar sobre el listado una fila "Filtros activos: robótica × · Robótica y control ×" con botón para quitar cada uno. | `src/pages/Explorar.tsx` L113–L120 | Aplicado en commit 05c07b6 |
-| P04 | U7 · T1 | Busca "a ciegas" sin saber qué términos existen. *"Que con solo escribir algunas palabras ya empiece a mostrar, como Google."* | 2 | HU-02 | Lista de sugerencias (`<datalist>` o menú `role="listbox"`) con nombres de semilleros, áreas y líneas, filtrada mientras se escribe. | `src/pages/Explorar.tsx` L75–L93; datos en `src/data/seed.ts` | Pendiente |
-| P05 | TD1 · TD1/TD2 | No entiende "Reclamar ficha" (*"creo que es crear ficha"*); el teléfono recién guardado no aparece en la vista previa. | 2 | HU-29, HU-30 | Renombrar el botón a "Verificar mi ficha" en panel, página y diálogo, y refrescar la vista previa al guardar el contacto. | `src/pages/DirectorPanel.tsx` L30; `src/pages/DirectorFicha.tsx` L103, L129, L138, L143 | Aplicado en commit 05c07b6 |
-| P06 | U10 · T2 | En "Requisitos" aparece "Sin información" y no se sabe si no hay requisitos o si no se cargaron. | 2 | HU-04 | Dos textos distintos: "Sin requisitos previos (entrada libre)" cuando el director lo declara, y "El director aún no ha cargado esta información" cuando la ficha está precargada. | `src/pages/Ficha.tsx` L21, L69–L73 | Aplicado en commit 05c07b6 |
-| P07 | U10 · T1 | Las áreas temáticas ocupan mucho espacio y "se pierden" los semilleros; el diseño parece "muy sobrio". | 2 (estético) | HU-01 | Decisión: **no se cambia**. Se mantiene el diseño institucional de la UNAL (coherencia con Hermes y con la identidad de la sede); el bloque de áreas se mueve y compacta como parte de P02. | — | Descartado con justificación |
-| P08 | U11 · T1 | Búsquedas sin coincidencia exacta ("bioingeniería", "ingeniería") devuelven pantalla vacía. *"¿Qué hago?"* | 3 | HU-02 | En el estado vacío, mostrar las áreas temáticas y hasta 4 semilleros cuyo nombre o área contengan parte del término (coincidencia parcial sin tildes). | `src/pages/Explorar.tsx` L122–L136 | Aplicado en commit 05c07b6 |
+**Rúbrica de gravedad:** 1 = problema estético · 2 = problema pequeño de usabilidad · 3 = problema importante de usabilidad · 4 = catástrofe de usabilidad.
 
-**Cómo cerrar el aspecto con una iteración real (propuesta).** Implementar P01, P03, P05, P06 y P08 (son cambios de menos de una hora cada uno y cubren los tres hallazgos de gravedad 3), anotar el commit en la columna "Estado", y repetir la tarea T1 con 2 usuarios nuevos (U12 y U13) y la tarea TD1 con el mismo director. Con eso la tabla queda con evidencia "antes / después" y se cumple literalmente el enunciado: *problema detectado → cambio aplicado*. El interruptor "Mostrar etiquetas de historias de usuario" del Modo evaluación sirve para tomar las capturas de antes y después con la HU visible.
+#### 3.1.2 Tareas
 
-**Correcciones menores al reporte.** (a) En la tabla de registros el director aparece con las tareas T1–T4; deben llamarse TD1–TD4 para que coincidan con su tabla de tareas. (b) Explicar en una línea por qué no existe U8. (c) El enunciado del hito pide "al menos 2 usuarios reales"; vale la pena decir explícitamente que se superó con 11.
+| Tarea | Instrucción al usuario | Se considera completada cuando… | Historias |
+|---|---|---|---|
+| T1. Buscar | Encuentra un semillero relacionado con un tema que te interese (por ejemplo, robótica). | Abre la ficha de un semillero desde el catálogo o el buscador. | HU-01, HU-02 |
+| T2. Informarse | Averigua quién dirige ese semillero, cómo contactarlo y qué requisitos pide. | Identifica en la ficha al director, su correo y los requisitos. | HU-04 |
+| T3. Convocatoria | Averigua si tiene convocatoria abierta, hasta cuándo puedes aplicar y cuántos cupos hay. | Dice la fecha de cierre y los cupos, o reconoce que está cerrada. | HU-12 |
+| T4. Postularse | Postúlate al semillero. | Pasa por el inicio de sesión, la mayoría de edad y la autorización de datos, envía el formulario y ve «Postulación enviada» con un número. | HU-08, HU-15, HU-16, HU-17 |
+| TD1. Verificar ficha | Entra como director y confirma que la ficha de tu semillero es correcta. | Ve el panel de su semillero y la ficha pasa a «Verificada» con fecha. | HU-09, HU-29 |
+| TD2. Editar | Actualiza la descripción y los requisitos de tu semillero. | Guarda y ve el cambio reflejado en la ficha. | HU-30 |
+| TD3. Convocatoria | Abre una convocatoria de dos semanas con 5 cupos. | La convocatoria queda abierta con la fecha y los cupos correctos. | HU-32 |
+| TD4. Decidir | Revisa la postulación que llegó y responde al estudiante. | Abre la postulación, ve solo los datos del formulario y registra aceptar o rechazar. | HU-19 |
+
+#### 3.1.3 Resultados
+
+**Estudiantes (n = 10).** Todos completaron las 4 tareas sin ayuda.
+
+| Tarea | Completada sin ayuda | Tiempo: mediana (mín.–máx.) | Clics: mediana (mín.–máx.) |
+|---|---|---|---|
+| T1. Buscar | 10 de 10 | 38,5 s (10–98) | 3,5 (1–21) |
+| T2. Informarse | 10 de 10 | 5 s (1–12) | 0 (0–1) |
+| T3. Convocatoria | 10 de 10 | 3 s (2–10) | 0 (0–0) |
+| T4. Postularse | 10 de 10 | 55 s (25–82) | 16 (15–20) |
+
+**Director (n = 1).** Completó las 4 tareas; necesitó ayuda en 2.
+
+| Tarea | Resultado | Tiempo | Clics |
+|---|---|---|---|
+| TD1. Verificar ficha | Con ayuda | 120 s | 7 |
+| TD2. Editar | Con ayuda | 40 s | 4 |
+| TD3. Convocatoria | Sin ayuda | 50 s | 12 |
+| TD4. Decidir | Sin ayuda | 30 s | 5 |
+
+**Cuestionario (estudiantes, escala 1 a 5).** Mide cuatro constructos: facilidad de uso y utilidad percibidas, del modelo de aceptación tecnológica (TAM), y calidad y satisfacción, del modelo de éxito de sistemas de información de DeLone y McLean, siguiendo la integración de ambos propuesta por Legramante et al. (2023).
+
+| Constructo | Media |
+|---|---|
+| Facilidad de uso percibida | 4,50 |
+| Utilidad percibida | 4,57 |
+| Calidad percibida | 4,33 |
+| Satisfacción | 4,50 |
+
+#### 3.1.4 Análisis
+
+- **Ningún hallazgo fue de gravedad 4**, así que, según la regla RITE, no hubo que modificar el prototipo entre un usuario y el siguiente.
+- **La búsqueda concentró los problemas.** De los 8 hallazgos, 6 corresponden a T1 (P01, P02, P03, P04, P07 y P08). La mitad de los estudiantes tardó más de 45 s en T1, y cada uno de ellos originó un hallazgo de búsqueda. Su facilidad de uso percibida promedió **4,23**, frente a **4,77** de los otros cinco.
+- **Más clics, menos facilidad percibida.** La correlación de Spearman entre los clics totales y la facilidad de uso percibida fue **ρ = −0,74 (p = 0,014; n = 10)**, significativa al 5 %. Se eligió Spearman porque la muestra es pequeña y las respuestas son ordinales. Las demás correlaciones no fueron significativas: clics con calidad (ρ = −0,42; p = 0,23), con utilidad (ρ = −0,39; p = 0,26) y con satisfacción (ρ = 0,06; p = 0,88), y tiempo con facilidad (ρ = 0,11; p = 0,76).
+- **El director aportó hallazgos cualitativos valiosos.** Necesitó ayuda en las dos tareas sobre su ficha, lo que originó P05.
+
+**Limitaciones.** Es una prueba piloto: con 10 estudiantes y un solo director, los resultados cuantitativos son exploratorios y no se pueden generalizar. Las respuestas del director al cuestionario no se incluyeron en el análisis estadístico.
 
 ---
 
-### 3.3 Auditoría básica de accesibilidad (WCAG 2.1, nivel AA)
+### 3.2 Problema detectado vs. cambio aplicado en el prototipo
 
-**Método.** Revisión del prototipo desplegado el 12 de noviembre de 2026 (13 pantallas que cubren las 22 HU Must, abiertas desde `/evaluacion`) con un script que calculó la relación de contraste de todo el texto visible según la fórmula de WCAG, inventario de tamaños de fuente calculados, y prueba manual de navegación por teclado (Tab, Shift+Tab, Enter, Escape). Los hallazgos se contrastaron con el código fuente del commit `2919d85`. No se usó lector de pantalla.
+Los cambios se implementaron después de la ronda de pruebas, en dos tandas: P01, P03, P05, P06 y P08 en el commit `1ceb0f5`, y P02 y P04 en el commit `dbb461a`. Todos se verificaron con las pruebas automáticas del proyecto (`npm test`), que incluyen una prueba específica para P02 y otra para P04.
 
-#### 3.3.1 Contraste de color (1.4.3 y 1.4.11)
+| ID | Usuario · tarea | Problema detectado | Grav. | HU | Cambio aplicado en el prototipo | Estado |
+|---|---|---|---|---|---|---|
+| P01 | U2 · T1 | Al hacer una nueva búsqueda, la consulta anterior seguía en el campo y no sabía cómo empezar de nuevo. *«Si busco algo acá, de pronto que se eliminen las anteriores».* | 2 | HU-02 | Botón «×» dentro del campo que borra la búsqueda y devuelve el foco al campo. | **Aplicado** |
+| P02 | U4 · T1 | No sabía si buscar por tema o por nombre; la barra de búsqueda pesa más que las áreas. *«Que la barra de búsqueda sea algo secundario y no lo principal».* | 3 | HU-01, HU-02 | Las áreas temáticas pasaron arriba, como forma principal de explorar («Explora por área temática»), y la búsqueda por palabra quedó debajo como alternativa. El texto de ejemplo del campo dice ahora «Busca por tema, nombre o línea de investigación», lo que resuelve la duda de si buscar por tema o por nombre. | **Aplicado** |
+| P03 | U6 · T1 | Creía que elegir un área anulaba la palabra clave. *«Que cuando uno selecciona por área no invalide el filtro por palabra».* | 3 | HU-01, HU-02 | El prototipo ya combinaba ambos filtros; el problema era que no se veía. Se agregó una fila «Filtros activos» que muestra la palabra y el área a la vez, con un botón para quitar cada una y la nota «se aplican los dos a la vez». La hipótesis inicial (panel lateral) se descartó porque no atacaba la causa. | **Aplicado** |
+| P04 | U7 · T1 | Buscaba «a ciegas» sin saber qué términos existen. *«Que con solo escribir algunas palabras ya empiece a mostrar, como Google».* | 2 | HU-02 | Desde la segunda letra, una lista muestra hasta 6 sugerencias (áreas, semilleros y líneas de investigación) que coinciden desde el inicio de una palabra y sin importar las tildes. Elegir un área la aplica como filtro, un semillero abre su ficha y una línea la busca. Se maneja con el mouse o con el teclado (flechas, Enter y Escape), según el patrón ARIA de combobox. | **Aplicado** |
+| P05 | D1 · TD1 | No entendía «Reclamar ficha» (*«creo que es crear ficha… la palabra suya fue verificar»*) y el teléfono que guardó no aparecía en la ficha. | 2 | HU-29, HU-30 | Se usó la palabra del propio director: el botón, el título y el diálogo dicen ahora **«Verificar mi ficha»**. El teléfono no aparecía porque no había marcado «Autorizo publicar este dato»; ahora, al guardar, un aviso explica que el dato quedó registrado pero no es público hasta autorizarlo. | **Aplicado** |
+| P06 | U10 · T2 | «Sin información» en Requisitos no dejaba saber si no hay requisitos o si no se cargaron. | 2 | HU-04 | Dos textos distintos: en una ficha verificada, «Sin requisitos previos: entrada libre»; en una precargada, «El director aún no ha cargado esta información». | **Aplicado** |
+| P07 | U10 · T1 | Las áreas ocupan mucho espacio y «te pierdes los semilleros»; el diseño le parece muy sobrio. | 2 | HU-01 | No se cambia. Se clasifica como 2 y no como 1 (estético) porque el usuario también señaló que las áreas le restaban visibilidad a los semilleros; esa parte se atendió junto con P02: los botones de área son ahora más compactos y ocupan menos espacio. La sobriedad visual se mantiene a propósito, por coherencia con la identidad institucional de la UNAL. | **Descartado con justificación** |
+| P08 | U11 · T1 | Una búsqueda sin coincidencia exacta mostraba una pantalla vacía. *«Tampoco hay. ¿Qué hago?».* | 3 | HU-02 | En lugar de la pantalla vacía, se sugieren hasta 4 semilleros relacionados (coincidencia parcial sin tildes) y las áreas temáticas. | **Aplicado** |
 
-| Elemento | Colores | Relación | Mínimo | Resultado |
-|---|---|---|---|---|
-| Texto del cuerpo | `#565A5C` sobre `#F4F4F3` | 6,33:1 | 4,5:1 | Cumple |
-| Botón primario y chips "Convocatoria abierta" | blanco sobre `#466B3F` | 6,11:1 | 4,5:1 | Cumple |
-| Barra superior gris (enlaces de 12 px) | blanco sobre `#6B6B6B` | 5,33:1 | 4,5:1 | Cumple (es el valor más bajo del sitio) |
-| Mensajes de error | `#A61C31` sobre blanco | > 4,5:1 | 4,5:1 | Cumple |
-| Texto de ejemplo del buscador principal | `text-gray-400` (`#9CA3AF`) sobre blanco | **2,54:1** | 4,5:1 | **No cumple** |
-| Texto de ejemplo del buscador del encabezado | blanco al 80 % sobre `#676767` | **4,31:1** | 4,5:1 | **No cumple** (por poco) |
-| Bordes de campos (`.input`, chips de área) | `#B1B2B0` sobre blanco | **2,13:1** | 3:1 | **No cumple** |
-| Indicador de foco sobre encabezado y pie | `#466B3F` sobre `#5F5F5F` y `#6B6B6B` | **1,04:1 y 1,15:1** | 3:1 | **No cumple** |
+**Resumen:** 7 hallazgos aplicados (incluidos los 3 de gravedad 3) y 1 descartado con justificación.
 
-Resultado: **0 fallos de contraste en texto normal** en las 13 pantallas; 4 fallos en texto de ejemplo, bordes e indicador de foco.
+**Evidencia visual (P02 y P04).** Las áreas aparecen antes que la búsqueda, y al escribir «rob» se sugieren el área, el semillero y las líneas relacionadas:
 
-#### 3.3.2 Tamaños de fuente y escalado (1.4.4)
+![Explorar con las áreas temáticas arriba y la lista de sugerencias abierta al escribir «rob»](docs/img/p04-sugerencias.png)
 
-- Tamaño base de 16 px (`html { font-size: 100% }`) y todo en unidades relativas, así que el zoom del navegador funciona.
-- El Panel de Accesibilidad permite escalar el texto entre 85 % y 150 % (`A11yPanel.tsx`) y activar un modo de alto contraste que fuerza texto `#000` y bordes negros (`index.css`, reglas `.hc`).
-- En la pantalla Explorar hay 82 elementos de texto a 12 px (barra superior, etiquetas, pie de página) y 2 a 11 px ("UNIVERSIDAD / DE COLOMBIA" en el escudo). En el tablero de la Vicedecanatura los ejes del gráfico van a 10 y 11 px.
-- WCAG no fija un tamaño mínimo, pero 12 px en enlaces de navegación con peso 600 y 10 px en ejes está por debajo de lo recomendado en la práctica (14 px para cuerpo, 12 px para notas).
+**Evidencia visual (P01, P03 y P08).** Búsqueda sin coincidencia exacta antes y después del cambio:
 
-#### 3.3.3 Navegación por teclado (2.1.1, 2.4.3, 2.4.7)
+| Antes | Después |
+|---|---|
+| ![Búsqueda sin resultados antes del cambio: solo un mensaje y un botón](docs/img/ia-vacio-antes.png) | ![Búsqueda sin resultados después del cambio: botón para borrar, filtros activos y semilleros relacionados](docs/img/ia-vacio-despues.png) |
 
-| Comprobación | Resultado | Evidencia |
+**Segunda ronda pendiente.** Los cambios se verificaron con pruebas automáticas, pero todavía no con usuarios. Para cerrar el ciclo RITE, se propone repetir T1 y T2 con 2 estudiantes nuevos y TD1 con el mismo director, y comparar con la ronda 1 (T1: mediana de 38,5 s y 3,5 clics; TD1: 120 s con ayuda).
+
+---
+
+### 3.3 Auditoría de accesibilidad (WCAG 2.2, nivel AA)
+
+
+**Inclusión (ABET Student Outcome 2).** La auditoría busca que Atlas pueda usarlo cualquier estudiante de la Facultad, incluidas personas con baja visión, daltonismo o que no usan mouse. Es un factor de bienestar y de contexto social en el diseño del sistema de información.
+
+**Método.** Se calculó la razón de contraste (fórmula WCAG) de 35 combinaciones de texto, componentes y fondos. Se revisó la escala tipográfica. Se inspeccionó el código de cada patrón interactivo (diálogos, menús, pestañas, formularios, foco) y se ejecutó axe-core 4.10 sobre 10 pantallas públicas y con sesión. 
+
+#### 3.3.1 Resultado: antes y después de corregir
+
+| Indicador | Antes | Después |
 |---|---|---|
-| Enlace "Saltar al contenido" como primer elemento | Cumple | `Layout.tsx` L20–L22; primer Tab lo muestra |
-| Zonas con nombre (encabezado, navegación principal, contenido, paginación, pie) | Cumple | `aria-label` en `<header>`, `<nav>`, `<footer>` |
-| Orden de tabulación sin `tabindex` positivos; 77 elementos enfocables en Explorar | Cumple | Inspección del DOM |
-| Indicador de foco visible, 3 px | Cumple sobre fondo claro; **falla** sobre encabezado y pie | `index.css` L9–L11 (un solo color para todo el sitio) |
-| Chips de área con estado (`aria-pressed`), pasos con `aria-current="step"`, interruptor con `role="switch"` | Cumple | `Explorar.tsx` L103; `Postular.tsx` L22; `DirectorConvocatoria.tsx` L40 |
-| Diálogos: `role="dialog"`, `aria-modal`, foco al abrir, Escape cierra y devuelve el foco | Cumple | `UI.tsx` L48–L87 |
-| Diálogos: el foco **se queda dentro** mientras está abierto | **No cumple** | Con 12 tabulaciones el foco sale al pie de página (`UI.tsx` no tiene trampa de foco) |
-| Al cambiar de paso en la postulación, el foco va al nuevo paso | **No cumple** | El foco vuelve al `<body>` |
-| Errores de formulario anunciados (`role="alert"`) | Cumple | `UI.tsx` L122–L126 |
-| Errores ligados al campo (`aria-invalid`, `aria-describedby`), obligatorios con `required`, foco al primer error | **No cumple** | `Campo` solo pinta el texto; el asterisco es visual |
-| Idioma declarado | Cumple | `<html lang="es-CO">` |
-| Imágenes con texto alternativo; íconos y enlaces sociales con nombre | Cumple | `alt` y `aria-label` en todos; avisan "abre unal.edu.co" |
-| Jerarquía de títulos | Observación | En Explorar salta de `h1` a `h3` |
+| Violaciones automáticas (axe-core) | 1 en 10 pantallas | **0 en 11 pantallas** |
+| Fallos de contraste | 7 | **0** |
+| Hallazgos de prioridad alta | 4 | **0** |
+| Hallazgos de prioridad media | 4 | **0** corregidos de esos 4; 1 nuevo pendiente (M5) |
+| Texto de cuerpo / mínimo | 14 px / 12 px | **16 px / 14 px** (excepto los ejes del gráfico del Tablero, B3) |
 
-#### 3.3.4 Hallazgos y corrección
+#### 3.3.2 Contraste de color
 
-| # | Hallazgo | Criterio | Prioridad | Corrección (archivo) |
-|---|---|---|---|---|
-| A1 | Foco invisible sobre encabezado y pie | 2.4.7 | Alta | `index.css`: añadir `box-shadow: 0 0 0 3px #fff, 0 0 0 6px #466B3F` al `:focus-visible` (anillo doble visible en claro y oscuro) |
-| A2 | Bordes de campos y chips a 2,13:1 | 1.4.11 | Alta | `tailwind.config.js`: usar `#8A8A8A` o más oscuro para bordes de `.input` y chips; `#B1B2B0` puede seguir en separadores decorativos |
-| A3 | Texto de ejemplo a 2,54:1 y 4,31:1 | 1.4.3 | Media | `index.css` `.input`: `placeholder:text-gray-500` (`#6B7280`, 4,8:1); `Header.tsx` L176–L188: subir opacidad a 100 % |
-| A4 | Errores no ligados al campo; sin `required`; foco en el botón tras fallar | 1.3.1, 3.3.1, 4.1.2 | Alta | `UI.tsx` `Campo`: generar `id` del error, pasar `aria-describedby` y `aria-invalid` al control; `Postular.tsx`: `required` en los 5 campos y `focus()` al primer error |
-| A5 | El foco no sigue el cambio de paso | 2.4.3 | Media | `Postular.tsx`: `ref` al título del paso con `tabIndex={-1}` y `focus()` en el `useEffect` de `paso` |
-| A6 | Diálogo sin trampa de foco | 2.4.3 | Media | `UI.tsx` `Dialog`: en `onKey`, si es Tab, ciclar entre el primer y último elemento enfocable del diálogo |
-| A7 | `h1` → `h3` en Explorar | 1.3.1 | Baja | `Explorar.tsx`: `h2` "Resultados" antes del listado, o tarjetas con `h2` |
-| A8 | Texto a 10–12 px en barra superior, pie y ejes del gráfico | 1.4.4 (práctica) | Baja | Subir etiquetas a 13–14 px y ejes de `Tablero.tsx` a 12 px |
-| A9 | Casillas de 16×16 y 20×20 px | 2.5.8 (WCAG 2.2) | Baja | Cumple porque la etiqueta es pulsable; opcional llevarlas a 24 px |
+Todo el texto de lectura supera 4,5:1; el valor más bajo es 4,83:1 (texto de ejemplo de los campos).
 
-**Pendiente para una segunda ronda:** prueba con lector de pantalla (NVDA), vista a 320 px de ancho y zoom al 200 % (1.4.10), y descripción textual del gráfico de barras del tablero (1.1.1).
+| Elemento | Antes | Después | Criterio |
+|---|---|---|---|
+| Anillo de foco sobre el header y el pie | 1,38:1 y 1,04:1 | 8,45:1 y 6,39:1 (anillo blanco) | 2.4.7, 1.4.11 |
+| Borde de los campos | 2,13:1 | 6,97:1 | 1.4.11 |
+| Texto de ejemplo de los campos | 2,54:1 | 4,83:1 | 1.4.3 |
+| Iconos de redes sociales | 2,38:1 | 6,69:1 | 1.4.11 |
+| Texto principal, enlaces, botones, errores, header y pie | — | Entre 5,33:1 y 16:1 | 1.4.3 |
 
-**Conclusión del aspecto 3.** El prototipo parte de una base sólida: sin fallos de contraste en texto, estructura semántica completa, enlace de salto, diálogos con gestión de foco y panel propio de escalado y alto contraste. Los 4 hallazgos de prioridad alta (A1, A2, A4 y, por su efecto en usuarios de teclado, A6) se corrigen en 3 archivos (`index.css`, `tailwind.config.js`, `UI.tsx`) sin tocar la lógica.
+#### 3.3.3 Tamaños de fuente
+
+- Cuerpo, botones y campos a **16 px**; texto secundario a **14 px**; títulos en tres niveles (30, 20 y 18 px).
+- Unidades relativas: el zoom del navegador funciona y el viewport no lo bloquea.
+- El Panel de Accesibilidad escala el texto del 85 % al 150 % y ofrece un modo de alto contraste.
+- Excepciones: el logotipo del header (9 y 11 px; WCAG exime los logotipos) y los ejes del gráfico del Tablero (10 y 11 px; pendiente B3).
+
+#### 3.3.4 Navegación por teclado
+
+| Comprobación | Estado |
+|---|---|
+| Enlace «Saltar al contenido», regiones con nombre (`header`, `nav`, `main`, `footer`), un `h1` por página y títulos sin saltos | Cumple |
+| Foco visible en todo el sitio, también sobre el header y el pie | Cumple (corregido) |
+| Diálogos: el foco entra, queda atrapado con Tab, Escape cierra y el foco vuelve | Cumple (corregido) |
+| Menú de usuario y pestañas de «Mis datos» con flechas, Inicio, Fin y Escape | Cumple (corregido) |
+| Errores de formulario vinculados al campo (`aria-invalid`, `aria-describedby`) | Cumple (corregido) |
+| Sin `tabindex` positivos; controles nativos (`button`, `a`, `input`) | Cumple |
+| Al pasar de un paso a otro en la postulación, el foco va al nuevo paso | **Pendiente (M5)** |
+
+#### 3.3.5 Pendientes
+
+1. **M5** (2.4.3): al cambiar de paso en la postulación, el foco vuelve al inicio de la página en lugar de ir al título del nuevo paso.
+2. **B3**: los ejes del gráfico del Tablero miden 10 y 11 px; conviene subirlos a 12 px o más.
+3. **B2**: la navegación y las pestañas en mayúsculas sostenidas cuestan más de leer (no es un criterio WCAG; decisión del equipo).
+4. **Pruebas manuales**: recorrido completo con teclado, VoiceOver o NVDA, zoom al 200 % y ventana de 320 px.
+
+---
 
 ## Módulo IV: Persistencia de soporte
 
@@ -412,42 +685,107 @@ Este módulo presenta el esquema de datos mínimo y el mapa de API que soportan 
 
 ### 4.1 Esquema de datos mínimo
 
-El esquema tiene seis tablas que alimentan el prototipo y cuatro de extensión. Estas últimas almacenan información que la universidad ya registra de cada grupo en Hermes y que el MVP aún no muestra. Atlas no se conecta a Hermes
+Seis tablas alimentan todas las pantallas del prototipo. El diagrama muestra solo esas tablas y los campos que cada pantalla lee o escribe.
 
-<img width="1520" height="1376" alt="er-diagram" src="https://github.com/user-attachments/assets/df29d57d-7720-45bc-814e-3776755f2274" />
+```mermaid
+erDiagram
+    app_user ||--o{ consent : "otorga"
+    app_user ||--o{ application : "se postula"
+    app_user |o--o{ application : "decide (director)"
+    app_user |o--o{ seedbed : "dirige"
+    seedbed ||--o{ research_line : "tiene"
+    seedbed ||--o{ open_call : "abre"
+    open_call ||--o{ application : "recibe"
+    consent ||--o{ application : "respalda"
 
-Las tablas de línea continua corresponden al MVP; las de línea punteada, a la extensión.
+    app_user {
+        uuid id PK
+        text email UK "correo @unal.edu.co"
+        text full_name
+        text program
+        smallint semester
+        text role "estudiante, director o vicedecanatura"
+        timestamptz adult_declared_at "mayoría de edad"
+        timestamptz deleted_at "eliminación del perfil"
+    }
+    seedbed {
+        uuid id PK
+        text name
+        text area "lista cerrada de 10 áreas"
+        text presentation
+        text requirements
+        text director_name
+        text director_email "permite fichas precargadas"
+        uuid director_id FK
+        text record_status "Precargada o Verificada"
+        timestamptz verified_at
+        timestamptz updated_at
+        text website
+        text logo_url
+        text phone
+        boolean publish_phone
+        text whatsapp
+        boolean publish_whatsapp
+    }
+    research_line {
+        uuid id PK
+        uuid seedbed_id FK
+        text name
+    }
+    open_call {
+        uuid id PK
+        uuid seedbed_id FK
+        text term "periodo, por ejemplo 2026-2"
+        text status "abierta o cerrada"
+        date closes_on
+        smallint seats
+    }
+    application {
+        uuid id PK
+        text number UK "ATL-2026-0001"
+        uuid call_id FK
+        uuid student_id FK
+        uuid consent_id FK
+        text availability
+        text motivation "máximo 500 caracteres"
+        text status "Enviada, Aceptada, Rechazada o Retirada"
+        timestamptz submitted_at
+        timestamptz read_at "marca de Nueva"
+        timestamptz decided_at
+        uuid decided_by FK
+    }
+    consent {
+        uuid id PK
+        uuid user_id FK
+        text purpose "postulación o avisos"
+        text notice_version "v1.0"
+        timestamptz granted_at
+        timestamptz revoked_at
+    }
+```
 
-| Tabla | Contenido | Grupo |
+| Tabla | Pantallas que alimenta | Contenido |
 | --- | --- | --- |
-| `app_user` | Usuario: correo, nombre, programa y rol | MVP |
-| `seedbed` | Ficha del semillero. Incluye código de registro, estados, categoría Minciencias, contacto, enlaces y enfoque | MVP |
-| `research_line` | Líneas de investigación | MVP |
-| `open_call` | Convocatoria: periodo, fecha de cierre y cupos | MVP |
-| `application` | Postulación y su estado | MVP |
-| `consent` | Autorización de tratamiento de datos, con finalidad y versión del aviso | MVP |
-| `member` | Integrantes y su rol en el grupo | Extensión |
-| `project`, `product` | Proyectos y productos académicos | Extensión |
-| `classification` | Sede, dependencia, planes de estudio, agenda de conocimiento y áreas OCDE | Extensión |
-| `outbox_email`, `audit_event`, `change_log` | Correos pendientes, auditoría de acciones e historial de cambios | Soporte |
+| `app_user` | Inicio de sesión, menú por rol, Mis datos, postulación (datos prellenados) | Correo, nombre, programa, semestre, rol, declaración de mayoría de edad y fecha de eliminación |
+| `seedbed` | Explorar, Ficha, Panel y Editar ficha del director, Tablero | Ficha completa: área temática, presentación, requisitos, director, estado (precargada o verificada), página web, logo y contacto con su autorización de publicación |
+| `research_line` | Ficha, Editar ficha, búsqueda | Líneas de investigación del semillero |
+| `open_call` | Ficha (bloque de convocatoria), Convocatoria del director | Periodo, estado, fecha de cierre y cupos. Los cupos ocupados se calculan contando las postulaciones aceptadas. |
+| `application` | Postulación, Comprobante, Mis postulaciones, Postulaciones del director, Tablero | Número, disponibilidad, mensaje, estado, fechas de envío, lectura y decisión, y la autorización que la respalda |
+| `consent` | Postulación (paso 2), Autorizaciones de Mis datos, Tablero | Finalidad, versión del aviso, fecha de otorgamiento y de revocación |
 
-##### Reglas de integridad de la base de datos
+**Fuera del diagrama.** Tres tablas de soporte no alimentan pantallas pero las necesita el backend: `outbox_email` (correos pendientes), `audit_event` (auditoría de accesos y acciones) y `change_log` (historial de cambios, ver 4.1.1). Cuatro tablas de extensión dejan listo el esquema para información que la universidad ya registra en Hermes y que el MVP aún no muestra: `member` (integrantes), `project`, `product` y `classification` (sede, dependencia, planes de estudio y áreas OCDE). Atlas no se conecta a Hermes; las fichas se cargan por archivo. Además, `seedbed` conserva tres campos de la carga institucional que ninguna pantalla muestra: sigla (`acronym`), dependencia (`department`) y código de registro (`col_code`); la capa analítica usa los dos primeros.
 
-**Control de postulaciones**
+#### Reglas de integridad de la base de datos
 
-La base de datos evita que un estudiante se postule más de una vez a la misma convocatoria. También se controla que cada semillero tenga como máximo una convocatoria abierta al mismo tiempo.
+**Control de postulaciones.** La base de datos impide que un estudiante se postule más de una vez a la misma convocatoria (índice único parcial sobre `call_id` y `student_id` para las postulaciones enviadas o aceptadas; tras un retiro o un rechazo puede volver a postularse) y que un semillero tenga más de una convocatoria abierta al mismo tiempo.
 
-**Validación de autorizaciones**
+**Validación de autorizaciones.** Al registrar una postulación, el sistema verifica en la misma transacción que `consent_id` corresponda a una autorización vigente del estudiante, con finalidad «postulación». Así no puede existir una postulación sin consentimiento.
 
-Al momento de registrar una postulación, el sistema verifica que el estudiante cuente con una autorización vigente. Esta validación se realiza durante la misma transacción para evitar registros sin el debido consentimiento.
+**Registro de revocaciones.** Las autorizaciones no se eliminan al revocarlas: se registra la fecha en `revoked_at`. Revocar la autorización de postulación retira además las postulaciones que aún no tienen decisión. El historial sirve como soporte del cumplimiento de la Ley 1581 de 2012.
 
-**Registro de revocaciones**
+**Valores cerrados.** El área temática, el rol, el estado de la ficha y el de la postulación solo admiten los valores definidos (restricciones `CHECK`).
 
-Las autorizaciones no se eliminan cuando son revocadas. En su lugar, se almacena la fecha de revocación en el campo `revoked_at`, lo que permite conservar un historial como soporte del cumplimiento de la Ley 1581 de 2012.
-
-**Uso de JSONB**
-
-El tipo de dato JSONB se utiliza únicamente en los casos donde la información no tiene una estructura fija o puede variar, como ocurre con los atributos adicionales de `seedbed.extra` y los valores registrados en `change_log`.
+**Uso de JSONB.** Se usa solo donde la información no tiene estructura fija, como los atributos adicionales de `seedbed.extra` (columnas de extensión) y los valores registrados en `change_log`.
 
 #### 4.1.1 Capa analítica
 
@@ -457,56 +795,71 @@ El modelo transaccional conserva solo el estado actual de cada registro, lo que 
 
 **Esquema estrella.** Un esquema `analytics`, en la misma base, expone vistas materializadas con una tabla de hechos por postulación y cuatro dimensiones. `dim_seedbed` se construye desde `change_log` como dimensión de cambio lento de tipo 2, de modo que cada postulación se analiza con los atributos que el semillero tenía en ese momento.
 
-<img width="1520" height="672" alt="star-schema" src="https://github.com/user-attachments/assets/4a433f8e-b65a-4c47-9af4-78b3d35fb2d0" />
+<img src="./docs/img/star-schema.png" alt="Esquema estrella: tabla de hechos de postulaciones y cuatro dimensiones" width="760" />
 
-Los indicadores del cuadro de mando se calculan sobre este esquema: crecimiento de postulaciones, tiempo de respuesta del director y postulaciones con autorización. Las vistas se refrescan cada noche y no contienen nombres ni correos. Al residir en la misma base no requieren un proceso de carga adicional; si el volumen crece, el mismo modelo se traslada a una bodega de datos para separar capa transaccional y analitica independientemente. 
+Los indicadores del cuadro de mando se calculan sobre este esquema: crecimiento de postulaciones, tiempo de respuesta del director y postulaciones con autorización. Las vistas se refrescan cada noche y no contienen nombres ni correos. Al residir en la misma base no requieren un proceso de carga adicional; si el volumen crece, el mismo modelo se traslada a una bodega de datos para separar la capa transaccional de la analítica.
 
 ### 4.2 Mapa de API
 
-La API expone 23 puntos de contacto REST bajo `/api/v1`, en formato JSON. La sesión se mantiene en una cookie HttpOnly.
+La API expone 28 puntos de contacto REST bajo `/api/v1`, en formato JSON. La sesión se mantiene en una cookie HttpOnly. La columna «Pantalla» indica dónde la usa el prototipo.
 
-| Método y ruta | Función | Rol |
-| --- | --- | --- |
-| `GET /auth/login` | Redirige a Google para autenticar | Público |
-| `GET /auth/callback` | Valida la respuesta de Google y crea la sesión | Público |
-| `GET /me` | Devuelve el perfil y el rol | Autenticado |
-| `POST /auth/logout` | Cierra la sesión | Autenticado |
-| `GET /seedbeds` | Lista el catálogo con búsqueda y filtros | Público |
-| `GET /seedbeds/{id}` | Devuelve la ficha con su convocatoria vigente | Público |
-| `POST /seedbeds/{id}/claim` | Registra el reclamo de la ficha | Director |
-| `PATCH /seedbeds/{id}` | Actualiza la ficha | Director |
-| `POST /seedbeds/{id}/calls` | Abre una convocatoria | Director |
-| `PATCH /calls/{id}` | Cierra la convocatoria o modifica fecha y cupos | Director |
-| `POST /me/adult-declaration` | Registra la declaración de mayoría de edad | Estudiante |
-| `POST /me/consents` | Registra la autorización de datos | Estudiante |
-| `POST /calls/{id}/applications` | Crea la postulación | Estudiante |
-| `GET /me/applications` | Lista las postulaciones del estudiante | Estudiante |
-| `GET /seedbeds/{id}/applications` | Lista las postulaciones recibidas | Director |
-| `GET /applications/{id}` | Devuelve el detalle de una postulación | Director |
-| `POST /applications/{id}/decision` | Registra la aceptación o el rechazo | Director |
-| `GET /me/data` | Devuelve los datos personales y las autorizaciones | Estudiante |
-| `PATCH /me/data` | Corrige los datos personales | Estudiante |
-| `DELETE /me/consents/{id}` | Revoca una autorización | Estudiante |
-| `DELETE /me` | Solicita la eliminación del perfil | Estudiante |
-| `GET /metrics` | Devuelve los indicadores agregados | Vicedecanatura |
-| `POST /admin/seedbeds/import` | Carga fichas desde un archivo CSV | Vicedecanatura |
+| Método y ruta | Función | Rol | Pantalla |
+| --- | --- | --- | --- |
+| **Sesión** | | | |
+| `GET /auth/login` | Redirige a Google para autenticar | Público | Ingresar |
+| `GET /auth/callback` | Valida la respuesta de Google, verifica el dominio `unal.edu.co` y crea la sesión | Público | Ingresar |
+| `GET /me` | Devuelve el perfil y el rol | Autenticado | Header (menú por rol) |
+| `POST /auth/logout` | Cierra la sesión | Autenticado | Menú de usuario |
+| **Catálogo y fichas** | | | |
+| `GET /seedbeds` | Lista el catálogo con búsqueda (`q`), área (`area`) y página (`page`) | Público | Explorar |
+| `GET /search/suggestions` | Devuelve hasta 6 sugerencias (áreas, semilleros y líneas) para el texto escrito (`q`) | Público | Explorar |
+| `GET /seedbeds/{id}` | Devuelve la ficha con su convocatoria vigente y semilleros relacionados | Público | Ficha |
+| `POST /seedbeds/{id}/verification` | Verifica la ficha precargada (pasa a «Verificada») | Director | Verificar mi ficha |
+| `PATCH /seedbeds/{id}` | Actualiza la ficha: descripción, líneas, requisitos, página web y contacto con su autorización | Director | Editar ficha |
+| `PUT /seedbeds/{id}/logo` | Sube o reemplaza el logo (PNG, JPG o WebP, máximo 2 MB) | Director | Editar ficha |
+| **Convocatorias** | | | |
+| `POST /seedbeds/{id}/calls` | Abre una convocatoria | Director | Convocatoria |
+| `PATCH /calls/{id}` | Cierra la convocatoria o modifica fecha y cupos | Director | Convocatoria |
+| **Postulación** | | | |
+| `POST /me/adult-declaration` | Registra la declaración de mayoría de edad | Estudiante | Postulación, paso 1 |
+| `POST /me/consents` | Registra una autorización (postulación o avisos) | Estudiante | Postulación, paso 2 |
+| `POST /calls/{id}/applications` | Crea la postulación; falla si no hay autorización vigente | Estudiante | Postulación, paso 3 |
+| `GET /me/applications` | Lista las postulaciones del estudiante | Estudiante | Mis postulaciones |
+| `GET /me/applications/{number}` | Devuelve el comprobante de una postulación | Estudiante | Comprobante |
+| `POST /applications/{id}/withdrawal` | Retira una postulación aún sin decidir | Estudiante | Mis postulaciones |
+| **Revisión del director** | | | |
+| `GET /seedbeds/{id}/applications` | Lista las postulaciones recibidas, con las no leídas marcadas | Director | Postulaciones |
+| `GET /applications/{id}` | Devuelve el detalle de una postulación (solo los datos del formulario) | Director | Detalle de postulación |
+| `PATCH /applications/{id}` | Marca la postulación como leída (`read_at`) | Director | Detalle de postulación |
+| `POST /applications/{id}/decision` | Registra la aceptación o el rechazo y encola el correo al estudiante | Director | Detalle de postulación |
+| **Privacidad** | | | |
+| `GET /me/data` | Devuelve los datos personales y el historial de autorizaciones | Estudiante | Mis datos |
+| `PATCH /me/data` | Corrige nombre, programa y semestre | Estudiante | Mis datos |
+| `POST /me/consents/{id}/revocation` | Revoca una autorización; el registro se conserva con `revoked_at` | Estudiante | Autorizaciones |
+| `DELETE /me` | Elimina el perfil | Estudiante | Eliminar perfil |
+| **Vicedecanatura** | | | |
+| `GET /metrics` | Devuelve los indicadores agregados, sin datos personales | Vicedecanatura | Tablero |
+| `POST /admin/seedbeds/import` | Carga fichas desde un archivo CSV | Vicedecanatura | (fuera del prototipo) |
 
 #### 4.2.1 Uso de los verbos HTTP
 
 | Verbo | Uso en Atlas | Idempotente |
 | --- | --- | --- |
-| `GET` | Consulta sin efectos sobre los datos | Sí |
-| `POST` | Crea un recurso o registra una acción | No; las restricciones de unicidad impiden duplicados |
+| `GET` | Consulta sin efectos sobre los datos. Por eso marcar una postulación como leída es un `PATCH` aparte y no un efecto de abrirla. | Sí |
+| `POST` | Crea un recurso o registra una acción del negocio: postular, verificar, decidir, retirar, revocar | No; las restricciones de unicidad y de estado impiden duplicados |
 | `PATCH` | Actualiza parte de un recurso | Sí en Atlas, porque asigna valores absolutos y no incrementos |
-| `DELETE` | Elimina o revoca | Sí |
+| `PUT` | Reemplaza el logo completo | Sí |
+| `DELETE` | Elimina el perfil | Sí |
 
-Se usa `PATCH` y no `PUT` porque las actualizaciones son parciales. `PUT` reemplaza el recurso completo: obligaría al cliente a enviar todos los campos y sobrescribiría los que administra otro actor, como los que provienen de la carga institucional. `PUT` es idempotente por definición y `PATCH` no lo garantiza; Atlas conserva esa propiedad al restringir `PATCH` a asignaciones de valor.
+Las acciones con reglas propias (verificar, decidir, retirar, revocar) se modelan como `POST` a un subrecurso y no como `DELETE` o `PATCH` genéricos. Así quedan explícitas, se auditan y conservan su historial: revocar una autorización no la borra, porque el registro es soporte legal.
+
+Para la ficha se usa `PATCH` y no `PUT` porque las actualizaciones son parciales. `PUT` reemplaza el recurso completo: obligaría al cliente a enviar todos los campos y sobrescribiría los que administra otro actor, como los que provienen de la carga institucional. `PUT` es idempotente por definición y `PATCH` no lo garantiza; Atlas conserva esa propiedad al restringir `PATCH` a asignaciones de valor. El logo sí usa `PUT`, porque siempre se reemplaza el archivo completo.
 
 ### 4.3 Arquitectura de soporte
 
 El navegador se comunica únicamente con Nginx, que enruta las peticiones bajo `/api` hacia Flask y las demás hacia Next.js. El backend es un solo proceso dividido en ocho módulos de dominio. Cada módulo es dueño de sus tablas y solo accede a los datos de otro a través de su capa de servicio, lo que permite extraerlo como servicio independiente sin reescribirlo.
 
-<img width="1520" height="1328" alt="architecture" src="https://github.com/user-attachments/assets/be7cab72-682a-481e-87d3-f6c8df9b5032" />
+<img src="./docs/img/architecture.png" alt="Arquitectura lógica: Nginx, Next.js, API Flask con ocho módulos y PostgreSQL" width="760" />
 
 #### 4.3.1 Decisiones y compromisos
 
@@ -520,6 +873,8 @@ El navegador se comunica únicamente con Nginx, que enruta las peticiones bajo `
 | Autenticación con Google Workspace | Contraseñas propias | Atlas no almacena credenciales y reutiliza la cuenta institucional. | Dependencia de Google. |
 
 Todos los componentes son software libre y el diseño no asume una nube específica, lo que mantiene bajo el costo de operación y evita la dependencia de un proveedor.
+
+**Prototipo y producción.** El prototipo del Módulo I está hecho con React y Vite, sin backend, para iterar rápido. En producción se propone Next.js para que el catálogo público se renderice en el servidor (carga inicial más rápida e indexable por buscadores). Como Next.js también usa React, los componentes y páginas del prototipo se reutilizan; lo que cambia es el enrutamiento y que el estado simulado de `store.tsx` se reemplaza por llamadas a esta API.
 
 #### 4.3.2 Principios SOLID
 
@@ -579,13 +934,13 @@ La arquitectura escala por etapas y ninguna exige reescribir el sistema. El crit
 
 Si la universidad habilita el acceso a datos oficiales, por ejemplo para confirmar si una persona es estudiante o docente, Atlas los consulta con una copia local de respaldo. El diseño asume que la fuente puede fallar o actualizarse con poca frecuencia, y garantiza que Atlas siempre responda.
 
-<img width="1520" height="1008" alt="official-data-flow" src="https://github.com/user-attachments/assets/2d438c0b-622a-456a-9936-a91aacfd53f1" />
+<img src="./docs/img/official-data-flow.png" alt="Flujo de consulta a fuentes oficiales con copia local de respaldo" width="760" />
 
-Solo se acude a la fuente cuando la copia local venció. Si la fuente no responde, se usa la última copia disponible; si nunca hubo una, se aplica la regla actual, que deduce el rol a partir del correo registrado en la ficha
+Solo se acude a la fuente cuando la copia local venció. Si la fuente no responde, se usa la última copia disponible; si nunca hubo una, se aplica la regla actual, que deduce el rol a partir del correo registrado en la ficha.
 
 ## Informe de uso de IA
 
-El equipo usó Claude (Anthropic) como asistente durante el Hito 2, conectado a Jira y a Figma mediante el protocolo MCP (Model Context Protocol). 
+El equipo usó Claude (Anthropic) como asistente durante el Hito 2, conectado a Jira y a Figma mediante el protocolo MCP (Model Context Protocol). Uno de los integrantes usó además Antigravity (Google DeepMind · Gemini) para el análisis del Módulo II, que después se actualizó con Claude (ver la declaración al final de ese módulo).
 
 ### Herramientas y conexiones
 

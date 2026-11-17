@@ -560,7 +560,7 @@ const PASOS = [
 
 ### 3.1 Reporte de validación RITE
 
-**Documentos completos:** [REPORTE DE VALIDACIÓN DE USABILIDAD.pdf](REPORTE%20DE%20VALIDACI%C3%93N%20DE%20USABILIDAD.pdf) · [Prueba de prototipo - Atlas .xlsx](Prueba%20de%20prototipo%20-%20Atlas%20.xlsx) (registros, cuestionario y cálculos)
+**Documentos completos:** [Reporte de validación de usabilidad](docs/reporte-validacion-usabilidad.md) (tareas, registros, ficha RITE, análisis y referencias) · [Prueba de prototipo - Atlas .xlsx](Prueba%20de%20prototipo%20-%20Atlas%20.xlsx) (registros, cuestionario y cálculos)
 
 **Videos de las sesiones:** [carpeta en Google Drive](https://drive.google.com/drive/folders/1zzHP633ZDwt_1zEWPy7KW0j9YW8DsSB1?usp=sharing)
 

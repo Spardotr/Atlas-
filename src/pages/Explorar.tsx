@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import { useStore } from '../store'
 import { AREAS } from '../types'
@@ -8,9 +8,13 @@ import { PageTitle } from '../components/UI'
 import { TarjetaSemillero } from '../components/Semillero'
 
 const POR_PAGINA = 20
+const MAX_SUGERENCIAS = 6
+
+type Sugerencia = { tipo: 'Área' | 'Semillero' | 'Línea'; texto: string; id?: string }
 
 export default function Explorar() {
   const { semilleros, role, sesion } = useStore()
+  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
   const area = params.get('area') ?? ''
@@ -69,6 +73,49 @@ export default function Explorar() {
     return ordenados.filter((s) => tokens.some((t) => normalizar(`${s.nombre} ${s.area} ${s.linea}`).includes(t))).slice(0, 4)
   }, [filtrados.length, ordenados, q])
 
+  // P04: sugerencias mientras se escribe, para no buscar «a ciegas». Áreas primero, luego semilleros y líneas.
+  const [abierto, setAbierto] = useState(false)
+  const [activa, setActiva] = useState(-1)
+  const sugerencias = useMemo<Sugerencia[]>(() => {
+    const nq = normalizar(texto.trim())
+    if (nq.length < 2) return []
+    const out: Sugerencia[] = []
+    const vistos = new Set<string>()
+    const agregar = (s: Sugerencia) => {
+      const clave = `${s.tipo}|${normalizar(s.texto)}`
+      if (!vistos.has(clave)) {
+        vistos.add(clave)
+        out.push(s)
+      }
+    }
+    // Coincide desde el inicio de una palabra: «rob» sugiere «Robótica», no «pro-b-lemas».
+    const coincide = (t: string) => ` ${normalizar(t)}`.includes(` ${nq}`)
+    AREAS.filter(coincide).forEach((a) => agregar({ tipo: 'Área', texto: a }))
+    ordenados.filter((s) => coincide(s.nombre)).forEach((s) => agregar({ tipo: 'Semillero', texto: s.nombre, id: s.id }))
+    ordenados.filter((s) => s.linea && coincide(s.linea)).forEach((s) => agregar({ tipo: 'Línea', texto: s.linea }))
+    return out.slice(0, MAX_SUGERENCIAS)
+  }, [texto, ordenados])
+  const mostrarSugerencias = abierto && sugerencias.length > 0
+
+  const cerrarSugerencias = () => {
+    setAbierto(false)
+    setActiva(-1)
+  }
+  const elegir = (s: Sugerencia) => {
+    cerrarSugerencias()
+    if (s.tipo === 'Semillero' && s.id) {
+      navigate(`/semilleros/${s.id}`, { state: { desde: `/${params.toString() ? `?${params.toString()}` : ''}` } })
+    } else if (s.tipo === 'Área') {
+      setTexto('')
+      actualizar({ q: '', area: s.texto })
+      irAResultados()
+    } else {
+      setTexto(s.texto)
+      actualizar({ q: s.texto })
+      irAResultados()
+    }
+  }
+
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA))
   const pag = Math.min(pagina, totalPaginas)
   const desde = (pag - 1) * POR_PAGINA
@@ -99,29 +146,108 @@ export default function Explorar() {
         role="search"
         onSubmit={(e) => {
           e.preventDefault()
+          cerrarSugerencias()
           actualizar({ q: texto.trim() })
           irAResultados()
         }}
         className="card"
       >
-        <label htmlFor="buscador" className="label">
+        {/* P02: las áreas van primero para mostrar qué temas existen; la búsqueda por palabra queda como alternativa.
+            P07: botones compactos para que el bloque no le quite espacio al listado. */}
+        <h2 id="titulo-areas" className="mb-2 text-lg font-semibold">Explora por área temática</h2>
+        <div className="flex flex-wrap gap-2" role="group" aria-labelledby="titulo-areas">
+          {AREAS.map((a) => (
+            <button
+              key={a}
+              type="button"
+              aria-pressed={area === a}
+              onClick={() => {
+                actualizar({ area: area === a ? '' : a })
+                irAResultados()
+              }}
+              className={`rounded border px-2.5 py-0.5 text-sm ${area === a ? 'border-unal-verde-oscuro bg-unal-verde-oscuro text-white' : 'border-unal-gris-oscuro bg-white hover:bg-gray-50'}`}
+            >
+              {a}
+            </button>
+          ))}
+        </div>
+
+        <label htmlFor="buscador" className="label mt-5">
           Buscar por palabra clave
         </label>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-unal-gris-oscuro" />
+            {/* P04: sugerencias mientras se escribe (patrón ARIA combobox con lista) */}
             <input
               id="buscador"
               ref={inputRef}
               type="search"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={mostrarSugerencias}
+              aria-controls="sugerencias-busqueda"
+              aria-activedescendant={mostrarSugerencias && activa >= 0 ? `sugerencia-${activa}` : undefined}
+              autoComplete="off"
               value={texto}
               onChange={(e) => {
                 setTexto(e.target.value)
                 actualizar({ q: e.target.value })
+                setAbierto(true)
+                setActiva(-1)
               }}
-              placeholder="Ej.: robótica, energía, datos…"
+              onKeyDown={(e) => {
+                if (!mostrarSugerencias) {
+                  if (e.key === 'ArrowDown' && sugerencias.length > 0) {
+                    e.preventDefault()
+                    setAbierto(true)
+                    setActiva(0)
+                  }
+                  return
+                }
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setActiva((i) => (i + 1) % sugerencias.length)
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setActiva((i) => (i <= 0 ? sugerencias.length - 1 : i - 1))
+                } else if (e.key === 'Enter' && activa >= 0) {
+                  e.preventDefault()
+                  elegir(sugerencias[activa])
+                } else if (e.key === 'Escape') {
+                  e.preventDefault()
+                  cerrarSugerencias()
+                }
+              }}
+              onBlur={cerrarSugerencias}
+              placeholder="Busca por tema, nombre o línea de investigación"
               className="input pl-10 pr-10 py-3 text-base [&::-webkit-search-cancel-button]:appearance-none"
             />
+            {mostrarSugerencias && (
+              <ul
+                id="sugerencias-busqueda"
+                role="listbox"
+                aria-label="Sugerencias de búsqueda"
+                className="absolute left-0 right-0 top-full z-20 mt-1 max-h-80 overflow-auto rounded border border-unal-gris-oscuro bg-white py-1 shadow-lg"
+              >
+                {sugerencias.map((s, i) => (
+                  <li
+                    key={`${s.tipo}-${s.texto}`}
+                    id={`sugerencia-${i}`}
+                    role="option"
+                    aria-selected={i === activa}
+                    // mousedown: evita que el campo pierda el foco (y cierre la lista) antes del clic
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => elegir(s)}
+                    onMouseEnter={() => setActiva(i)}
+                    className={`flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2 text-sm ${i === activa ? 'bg-unal-verde-oscuro text-white' : ''}`}
+                  >
+                    <span>{s.texto}</span>
+                    <span className={`shrink-0 text-xs ${i === activa ? 'text-white' : 'text-unal-gris-oscuro'}`}>{s.tipo}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             {/* P01: botón para borrar la búsqueda anterior y empezar de nuevo */}
             {texto !== '' && (
               <button
@@ -141,23 +267,6 @@ export default function Explorar() {
           <button className="btn-primary px-6" type="submit">
             Buscar
           </button>
-        </div>
-        <p className="mt-5 mb-2 text-lg font-semibold">Áreas temáticas</p>
-        <div className="flex flex-wrap gap-2">
-          {AREAS.map((a) => (
-            <button
-              key={a}
-              type="button"
-              aria-pressed={area === a}
-              onClick={() => {
-                actualizar({ area: area === a ? '' : a })
-                irAResultados()
-              }}
-              className={`rounded border px-3 py-1 text-sm ${area === a ? 'border-unal-verde-oscuro bg-unal-verde-oscuro text-white' : 'border-unal-gris-claro bg-white hover:bg-gray-50'}`}
-            >
-              {a}
-            </button>
-          ))}
         </div>
       </form>
 
@@ -213,7 +322,7 @@ export default function Explorar() {
           <p className="mt-4 text-sm">O explora por área temática:</p>
           <div className="mt-2 flex flex-wrap justify-center gap-2">
             {AREAS.map((a) => (
-              <button key={a} type="button" onClick={() => { setTexto(''); actualizar({ q: '', area: a }) }} className="rounded border border-unal-gris-claro bg-white px-3 py-1 text-sm hover:bg-gray-50">
+              <button key={a} type="button" onClick={() => { setTexto(''); actualizar({ q: '', area: a }) }} className="rounded border border-unal-gris-oscuro bg-white px-2.5 py-0.5 text-sm hover:bg-gray-50">
                 {a}
               </button>
             ))}

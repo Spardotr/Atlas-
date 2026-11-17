@@ -48,6 +48,42 @@ describe('E1 · Exploración (HU-01, HU-02, HU-04)', () => {
     expect(screen.getByTestId('contador')).toHaveTextContent('de 26 semilleros')
   })
 
+  it('P02: las áreas temáticas aparecen antes que el campo de búsqueda', () => {
+    renderApp('/')
+    const areas = screen.getByRole('heading', { name: 'Explora por área temática' })
+    const campo = screen.getByLabelText('Buscar por palabra clave')
+    expect(areas.compareDocumentPosition(campo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(campo).toHaveAttribute('placeholder', 'Busca por tema, nombre o línea de investigación')
+  })
+
+  it('P04: sugiere áreas, semilleros y líneas mientras se escribe y se maneja con teclado', async () => {
+    const user = userEvent.setup()
+    renderApp('/')
+    const campo = screen.getByRole('combobox', { name: 'Buscar por palabra clave' })
+    await user.type(campo, 'rob')
+    const lista = screen.getByRole('listbox', { name: 'Sugerencias de búsqueda' })
+    expect(campo).toHaveAttribute('aria-expanded', 'true')
+    expect(within(lista).getByRole('option', { name: /Robótica y control\s*Área/ })).toBeInTheDocument()
+    expect(within(lista).getByRole('option', { name: /Robótica y Control Móvil\s*Semillero/ })).toBeInTheDocument()
+
+    // Escape cierra la lista sin borrar lo escrito
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    expect(campo).toHaveValue('rob')
+
+    // Flecha abajo abre y marca la primera opción (el área); Enter la aplica como filtro
+    await user.keyboard('{ArrowDown}')
+    expect(campo).toHaveAttribute('aria-activedescendant', 'sugerencia-0')
+    await user.keyboard('{Enter}')
+    expect(screen.getByRole('button', { name: 'Robótica y control' })).toHaveAttribute('aria-pressed', 'true')
+    expect(campo).toHaveValue('')
+
+    // Elegir un semillero abre su ficha
+    await user.type(campo, 'movil')
+    await user.click(screen.getByRole('option', { name: /Robótica y Control Móvil/ }))
+    expect(screen.getByRole('heading', { level: 1, name: /Robótica y Control Móvil/ })).toBeInTheDocument()
+  })
+
   it('la ficha muestra 7 campos, "Sin información", sello y no muestra contacto no confirmado', () => {
     renderApp('/semilleros/drones-y-sistemas-autonomos')
     for (const campo of ['Nombre', 'Descripción', 'Línea de investigación', 'Director', 'Correo del director', 'Requisitos', 'Estado de convocatoria']) {

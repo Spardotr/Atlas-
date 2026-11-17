@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { Children, cloneElement, isValidElement, useEffect, useRef, type ReactElement, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { X } from 'lucide-react'
 import { useStore } from '../store'
@@ -65,7 +65,23 @@ export function Dialog({
     // Se ejecuta una sola vez al abrir: el foco va al diálogo y se devuelve al cerrar.
     const prev = document.activeElement as HTMLElement | null
     ref.current?.focus()
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && cerrarRef.current()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') return cerrarRef.current()
+      if (e.key !== 'Tab' || !ref.current) return
+      // Trampa de foco: Tab y Shift+Tab ciclan dentro del diálogo (WCAG 2.4.3)
+      const f = Array.from(ref.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'))
+      if (f.length === 0) return e.preventDefault()
+      const primero = f[0]
+      const ultimo = f[f.length - 1]
+      const activo = document.activeElement
+      if (e.shiftKey && (activo === primero || activo === ref.current)) {
+        e.preventDefault()
+        ultimo.focus()
+      } else if (!e.shiftKey && activo === ultimo) {
+        e.preventDefault()
+        primero.focus()
+      }
+    }
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('keydown', onKey)
@@ -114,15 +130,28 @@ export function Campo({
   hint?: string
   htmlFor?: string
 }) {
+  const idAyuda = htmlFor ? `${htmlFor}-ayuda` : undefined
+  // H4: el control asociado recibe aria-invalid y aria-describedby apuntando al error o a la ayuda
+  const convincular = (nodo: ReactNode): ReactNode => {
+    if (!htmlFor || !isValidElement(nodo)) return nodo
+    const props = nodo.props as { id?: string; children?: ReactNode }
+    if (props.id === htmlFor) {
+      return cloneElement(nodo as ReactElement<Record<string, unknown>>, {
+        'aria-invalid': error ? true : undefined,
+        'aria-describedby': error || hint ? idAyuda : undefined,
+      })
+    }
+    return props.children ? cloneElement(nodo as ReactElement<{ children?: ReactNode }>, undefined, Children.map(props.children, convincular)) : nodo
+  }
   return (
     <div>
       <label htmlFor={htmlFor} className="label">
         {label}
       </label>
-      {children}
-      {hint && !error && <p className="mt-1 text-xs text-unal-gris-oscuro">{hint}</p>}
+      {Children.map(children, convincular)}
+      {hint && !error && <p id={idAyuda} className="mt-1 text-sm text-unal-gris-oscuro">{hint}</p>}
       {error && (
-        <p role="alert" className="mt-1 text-xs font-semibold text-unal-rojo">
+        <p id={idAyuda} role="alert" className="mt-1 text-sm font-semibold text-unal-rojo">
           {error}
         </p>
       )}

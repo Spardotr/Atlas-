@@ -59,7 +59,7 @@ export default function Tablero() {
             {bajoMeta ? <Badge tone="rojo">Bajo la meta</Badge> : <Badge tone="verde">Meta alcanzada</Badge>}
           </div>
           <p className="mt-2 text-sm">{actual} postulaciones este semestre frente a {anterior} del anterior.</p>
-          <div className="mt-3 h-40" aria-label="Gráfico de postulaciones por semestre">
+          <div className="mt-3 h-40" role="img" aria-label="Gráfico de postulaciones por semestre">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={datos} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />

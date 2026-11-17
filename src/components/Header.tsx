@@ -26,7 +26,7 @@ function Redes() {
     <ul className="ml-3 flex items-center gap-1.5" aria-label="Redes sociales">
       {items.map(({ n, I, href }) => (
         <li key={n}>
-          <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${n} de la Universidad Nacional (se abre en una pestaña nueva)`} className="flex h-5 w-5 items-center justify-center rounded-full bg-[#9a9a9a] text-[#5c5c5c] hover:bg-white">
+          <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${n} de la Universidad Nacional (se abre en una pestaña nueva)`} className="flex h-5 w-5 items-center justify-center rounded-full bg-[#5c5c5c] text-white hover:bg-white hover:text-[#5c5c5c]">
             <I size={11} strokeWidth={2.4} aria-hidden />
           </a>
         </li>
@@ -63,6 +63,28 @@ export default function Header() {
   const [menuUsuario, setMenuUsuario] = useState(false)
   const [menuMovil, setMenuMovil] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Patrón de menú ARIA: al abrir el foco va al primer elemento; flechas, Inicio y Fin se mueven; Escape cierra y devuelve el foco.
+  useEffect(() => {
+    if (menuUsuario) menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+  }, [menuUsuario])
+  const teclasMenu = (e: React.KeyboardEvent) => {
+    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])
+    const i = items.indexOf(document.activeElement as HTMLElement)
+    const ir = (n: number) => {
+      e.preventDefault()
+      items[(n + items.length) % items.length]?.focus()
+    }
+    if (e.key === 'ArrowDown') ir(i + 1)
+    else if (e.key === 'ArrowUp') ir(i - 1)
+    else if (e.key === 'Home') ir(0)
+    else if (e.key === 'End') ir(items.length - 1)
+    else if (e.key === 'Tab') setMenuUsuario(false)
+    else if (e.key === 'Escape') {
+      setMenuUsuario(false)
+      menuRef.current?.querySelector<HTMLElement>('button[aria-haspopup]')?.focus()
+    }
+  }
 
   // El menú de usuario se cierra con Escape o al hacer clic fuera.
   useEffect(() => {
@@ -159,7 +181,7 @@ export default function Header() {
                       end={n.end}
                       className={({ isActive }) =>
                         clsx(
-                          'inline-block border-b-2 pb-0.5 text-sm font-semibold uppercase tracking-wide hover:text-unal-verde',
+                          'inline-block border-b-2 pb-0.5 text-sm font-semibold uppercase tracking-wide hover:border-white/70',
                           isActive ? 'border-unal-verde' : 'border-transparent',
                         )
                       }
@@ -179,6 +201,12 @@ export default function Header() {
                 onClick={() => setMenuUsuario((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuUsuario}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown' && !menuUsuario) {
+                    e.preventDefault()
+                    setMenuUsuario(true)
+                  }
+                }}
                 className="flex items-center gap-2 rounded px-2 py-1 hover:bg-white/10"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-unal-verde text-sm font-bold text-unal-texto">{iniciales}</span>
@@ -186,7 +214,7 @@ export default function Header() {
                 <ChevronDown size={14} aria-hidden />
               </button>
               {menuUsuario && (
-                <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-72 rounded bg-white p-3 text-unal-texto shadow-xl">
+                <div role="menu" aria-label="Menú de la cuenta" onKeyDown={teclasMenu} className="absolute right-0 top-full z-50 mt-2 w-72 rounded bg-white p-3 text-unal-texto shadow-xl">
                   <p className="truncate text-sm font-semibold">{sesion.correo}</p>
                   <span className="mt-1 inline-flex items-center gap-1 rounded bg-unal-verde-oscuro px-2 py-0.5 text-xs font-semibold text-white">
                     <ShieldCheck size={12} /> {rolEtiqueta}

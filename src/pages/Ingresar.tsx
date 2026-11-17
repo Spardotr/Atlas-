@@ -122,10 +122,10 @@ export default function Ingresar() {
           >
             <label htmlFor="otro-correo" className="label">Usar otra cuenta</label>
             <div className="flex gap-2">
-              <input id="otro-correo" type="email" value={otro} onChange={(e) => setOtro(e.target.value)} placeholder="nombre@unal.edu.co" className="input" />
+              <input id="otro-correo" type="email" value={otro} onChange={(e) => setOtro(e.target.value)} placeholder="nombre@unal.edu.co" className="input" aria-invalid={errorOtro ? true : undefined} aria-describedby={errorOtro ? 'otro-correo-error' : undefined} />
               <button type="submit" className="btn-primary">Continuar</button>
             </div>
-            {errorOtro && <p role="alert" className="mt-1 text-xs font-semibold text-unal-rojo">{errorOtro}</p>}
+            {errorOtro && <p id="otro-correo-error" role="alert" className="mt-1 text-xs font-semibold text-unal-rojo">{errorOtro}</p>}
           </form>
         </Dialog>
       )}

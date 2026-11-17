@@ -146,8 +146,8 @@ function FormularioFicha({ s }: { s: Semillero }) {
           <div>
             <label htmlFor="e-wa" className="label">WhatsApp</label>
             <p className="mb-1 text-sm text-unal-gris-oscuro">Si lo publicas, en la ficha aparecerá un botón «Escribir por WhatsApp» que abre la conversación con este número.</p>
-            <input id="e-wa" inputMode="tel" className="input" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value, publicarWhatsapp: false })} />
-            {errores.whatsapp && <p role="alert" className="mt-1 text-sm font-semibold text-unal-rojo">{errores.whatsapp}</p>}
+            <input id="e-wa" inputMode="tel" aria-invalid={errores.whatsapp ? true : undefined} aria-describedby={errores.whatsapp ? 'e-wa-error' : undefined} className="input" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value, publicarWhatsapp: false })} />
+            {errores.whatsapp && <p id="e-wa-error" role="alert" className="mt-1 text-sm font-semibold text-unal-rojo">{errores.whatsapp}</p>}
             <label className="mt-2 flex items-center gap-2 text-sm">
               <input type="checkbox" className="h-4 w-4 accent-unal-verde-oscuro" checked={f.publicarWhatsapp} disabled={!f.whatsapp.trim()} onChange={(e) => setF({ ...f, publicarWhatsapp: e.target.checked })} />
               Autorizo publicar este dato

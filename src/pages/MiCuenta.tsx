@@ -55,12 +55,29 @@ export default function MiCuenta() {
     <div className="mx-auto max-w-4xl px-4 py-8">
       <PageTitle hu={['HU-33', 'HU-34', 'HU-35', 'HU-36']} sub="Consulta, corrige y controla el uso de tu información personal.">Mis datos y privacidad</PageTitle>
 
-      <div role="tablist" aria-label="Secciones" className="mb-6 flex flex-wrap gap-1 border-b">
+      <div
+        role="tablist"
+        aria-label="Secciones"
+        className="mb-6 flex flex-wrap gap-1 border-b"
+        onKeyDown={(e) => {
+          // Patrón de pestañas ARIA: flechas, Inicio y Fin cambian de pestaña y mueven el foco
+          const i = TABS.findIndex((x) => x.id === tab)
+          const n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? TABS.length - 1 : null
+          if (n === null) return
+          e.preventDefault()
+          const destino = TABS[(n + TABS.length) % TABS.length]
+          setParams({ tab: destino.id })
+          document.getElementById(`tab-${destino.id}`)?.focus()
+        }}
+      >
         {TABS.map((t) => (
           <button
             key={t.id}
+            id={`tab-${t.id}`}
             role="tab"
             aria-selected={tab === t.id}
+            aria-controls={`panel-${t.id}`}
+            tabIndex={tab === t.id ? 0 : -1}
             onClick={() => setParams({ tab: t.id })}
             className={clsx('px-4 py-2 text-sm font-bold uppercase tracking-wide', tab === t.id ? 'border-b-2 border-unal-verde-oscuro text-unal-texto' : 'text-unal-gris-oscuro hover:text-unal-texto', t.id === 'eliminar' && tab !== t.id && 'text-unal-rojo')}
           >
@@ -70,7 +87,7 @@ export default function MiCuenta() {
       </div>
 
       {tab === 'datos' && (
-        <section className="card" aria-labelledby="t-datos">
+        <section id="panel-datos" role="tabpanel" className="card" aria-labelledby="tab-datos">
           <div className="mb-3 flex items-center justify-between">
             <h2 id="t-datos" className="section-title">Datos personales<HU id="HU-33" /></h2>
             {perfil && !editando && <button className="btn-outline" onClick={empezarEdicion}>Editar</button>}
@@ -141,7 +158,7 @@ export default function MiCuenta() {
       )}
 
       {tab === 'postulaciones' && (
-        <section aria-labelledby="t-post">
+        <section id="panel-postulaciones" role="tabpanel" aria-labelledby="tab-postulaciones">
           <h2 id="t-post" className="section-title mb-3">Mis postulaciones<HU id="HU-21" /></h2>
           {misPost.length === 0 ? (
             <div className="card text-sm">Todavía no te has postulado a ningún semillero. <Link to="/" className="font-semibold text-unal-verde-oscuro underline">Explorar semilleros</Link></div>
@@ -169,7 +186,7 @@ export default function MiCuenta() {
       )}
 
       {tab === 'autorizaciones' && (
-        <section aria-labelledby="t-aut">
+        <section id="panel-autorizaciones" role="tabpanel" aria-labelledby="tab-autorizaciones">
           <h2 id="t-aut" className="section-title mb-3">Autorizaciones<HU id="HU-33" /><HU id="HU-36" /></h2>
           {misAut.length === 0 ? (
             <div className="card text-sm">No has otorgado autorizaciones todavía.</div>
@@ -206,7 +223,7 @@ export default function MiCuenta() {
       )}
 
       {tab === 'eliminar' && (
-        <section className="card border-unal-rojo" aria-labelledby="t-del">
+        <section id="panel-eliminar" role="tabpanel" className="card border-unal-rojo" aria-labelledby="tab-eliminar">
           <h2 id="t-del" className="section-title mb-2 text-unal-rojo">Zona de peligro<HU id="HU-35" /></h2>
           <p className="text-sm">Eliminar tu perfil borra tus datos personales de Atlas. Esta acción no se puede deshacer.</p>
           <button className="btn-danger mt-4" onClick={() => { setConfirmacion(''); setEliminando(true) }}>Eliminar mi perfil</button>

@@ -53,9 +53,9 @@ export default function Ingresar() {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <PageTitle hu={['HU-08', 'HU-09']}>Iniciar sesión</PageTitle>
 
-      <ol className="mb-6 flex gap-3 text-sm font-semibold" aria-label="Pasos">
-        <li className={`rounded px-3 py-1 ${!privacidadOk ? 'bg-unal-verde-oscuro text-white' : 'bg-unal-gris-claro/50'}`}>1. Aviso de privacidad</li>
-        <li className={`rounded px-3 py-1 ${privacidadOk ? 'bg-unal-verde-oscuro text-white' : 'bg-unal-gris-claro/50'}`}>2. Cuenta institucional</li>
+      <ol className="mb-6 flex flex-wrap gap-x-6 gap-y-1 text-sm font-semibold" aria-label="Pasos">
+        <li aria-current={!privacidadOk ? 'step' : undefined} className={`border-b-4 pb-1 ${!privacidadOk ? 'border-unal-verde-oscuro text-unal-verde-oscuro' : 'border-transparent text-unal-gris-oscuro'}`}>1. Aviso de privacidad</li>
+        <li aria-current={privacidadOk ? 'step' : undefined} className={`border-b-4 pb-1 ${privacidadOk ? 'border-unal-verde-oscuro text-unal-verde-oscuro' : 'border-transparent text-unal-gris-oscuro'}`}>2. Cuenta institucional</li>
       </ol>
 
       {!privacidadOk ? (

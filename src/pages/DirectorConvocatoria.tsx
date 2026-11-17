@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useStore } from '../store'
+import { useCambiosSinGuardar } from '../components/CambiosSinGuardar'
 import { cuposDisponibles, fmtFecha, hoyISO } from '../lib/utils'
 import { Alerta, Campo, Dialog, HU, PageTitle } from '../components/UI'
 import { BadgeConvocatoria } from '../components/Semillero'
@@ -16,6 +18,11 @@ function Formulario({ s }: { s: Semillero }) {
 
   const llenos = s.convocatoria.aceptados >= s.convocatoria.cupos
 
+  // Control y libertad: avisar si se intenta salir con cambios sin guardar
+  const instantanea = JSON.stringify({ abierta, cierre, cupos })
+  const [guardado, setGuardado] = useState(instantanea)
+  const { aviso } = useCambiosSinGuardar(instantanea !== guardado)
+
   const guardar = (e: React.FormEvent) => {
     e.preventDefault()
     const err: Record<string, string> = {}
@@ -26,6 +33,7 @@ function Formulario({ s }: { s: Semillero }) {
     setErrores(err)
     if (Object.keys(err).length) return
     actualizarConvocatoria(s.id, { abierta, cierre, cupos: n })
+    setGuardado(instantanea)
   }
 
   return (
@@ -57,7 +65,11 @@ function Formulario({ s }: { s: Semillero }) {
           </Campo>
         </div>
         {cierre && <p className="text-sm">La convocatoria se cierra sola el {fmtFecha(cierre)} a las 23:59.</p>}
-        <div className="flex justify-end"><button type="submit" className="btn-primary">Guardar convocatoria</button></div>
+        <div className="flex justify-end gap-2">
+          <Link to="/director" className="btn-outline">Cancelar</Link>
+          <button type="submit" className="btn-primary">Guardar convocatoria</button>
+        </div>
+        {aviso}
       </form>
 
       {llenos && s.convocatoria.abierta && (

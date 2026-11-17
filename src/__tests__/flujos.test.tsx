@@ -198,7 +198,7 @@ describe('E6 · Director (HU-09, HU-29, HU-30, HU-32)', () => {
     renderApp('/')
     await entrarComoDirector(user)
     expect(await screen.findByRole('heading', { name: /Mi semillero/ })).toBeInTheDocument()
-    await user.click(screen.getByRole('link', { name: 'Verificar mi ficha' }))
+    await user.click(screen.getByRole('link', { name: 'Revisar mi ficha' }))
     await user.click(screen.getByRole('button', { name: 'Verificar mi ficha' }))
     const dlg = screen.getByRole('dialog')
     expect(within(dlg).getByRole('button', { name: 'Confirmar y verificar' })).toBeDisabled()

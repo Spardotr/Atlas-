@@ -1,16 +1,24 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import AppRoutes from './App'
 import { StoreProvider } from './store'
 import './index.css'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <BrowserRouter>
+// Data router: necesario para poder avisar al usuario antes de salir de un formulario con cambios sin guardar.
+const router = createBrowserRouter([
+  {
+    path: '*',
+    element: (
       <StoreProvider>
         <AppRoutes />
       </StoreProvider>
-    </BrowserRouter>
+    ),
+  },
+])
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <RouterProvider router={router} />
   </React.StrictMode>,
 )

@@ -27,7 +27,7 @@ export default function DirectorPanel() {
           <p className="mt-3 text-sm text-unal-gris-oscuro">
             {s.estadoFicha === 'Precargada' ? 'Tu ficha fue precargada desde Hermes. Revísala y verifícala.' : 'Tu ficha está verificada.'}
           </p>
-          <Link to="/director/ficha" className="btn-primary mt-4 w-full">{s.estadoFicha === 'Precargada' ? 'Verificar mi ficha' : 'Editar ficha'}</Link>
+          <Link to="/director/ficha" className="btn-primary mt-4 w-full">{s.estadoFicha === 'Precargada' ? 'Revisar mi ficha' : 'Editar ficha'}</Link>
         </section>
 
         <section className="card" aria-labelledby="c-conv">

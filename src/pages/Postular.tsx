@@ -7,13 +7,14 @@ import { DISPONIBILIDADES, PROGRAMAS, VERSION_AVISO } from '../types'
 import { convocatoriaAbierta, fmtFechaHora } from '../lib/utils'
 import { Alerta, Campo, HU, PageTitle } from '../components/UI'
 import NoPermiso from '../components/NoPermiso'
+import { useCambiosSinGuardar } from '../components/CambiosSinGuardar'
 
 const MAX_MENSAJE = 500
 
 function Pasos({ actual }: { actual: 1 | 2 | 3 }) {
   const items = ['Mayoría de edad', 'Autorización de datos', 'Formulario']
   return (
-    <ol className="mb-6 flex flex-wrap gap-2 text-sm font-semibold" aria-label="Progreso de la postulación">
+    <ol className="mb-6 flex flex-wrap gap-x-6 gap-y-1 text-sm font-semibold" aria-label="Progreso de la postulación">
       {items.map((t, i) => {
         const n = (i + 1) as 1 | 2 | 3
         const hecho = n < actual
@@ -21,7 +22,7 @@ function Pasos({ actual }: { actual: 1 | 2 | 3 }) {
           <li
             key={t}
             aria-current={n === actual ? 'step' : undefined}
-            className={clsx('flex items-center gap-2 rounded px-3 py-1', n === actual ? 'bg-unal-verde-oscuro text-white' : hecho ? 'bg-unal-verde/40' : 'bg-unal-gris-claro/50')}
+            className={clsx('flex items-center gap-2 border-b-4 pb-1', n === actual ? 'border-unal-verde-oscuro text-unal-verde-oscuro' : hecho ? 'border-unal-verde text-unal-texto' : 'border-transparent text-unal-gris-oscuro')}
           >
             {hecho ? <Check size={14} /> : <span>{n}.</span>} {t}
           </li>
@@ -49,6 +50,10 @@ export default function Postular() {
   })
   const [errores, setErrores] = useState<Record<string, string>>({})
 
+  // Control y libertad: avisar si se intenta salir con el formulario modificado y sin enviar
+  const [inicial] = useState(JSON.stringify(form))
+  const { aviso, permitirSalida } = useCambiosSinGuardar(JSON.stringify(form) !== inicial)
+
   if (!s) return <NoPermiso mensaje="No encontramos este semillero" />
   if (!convocatoriaAbierta(s)) return <Navigate to={`/semilleros/${s.id}`} state={{ aviso: 'cerrada' }} replace />
 
@@ -70,7 +75,10 @@ export default function Postular() {
     ev.preventDefault()
     if (!validar()) return
     const p = enviarPostulacion(s.id, form)
-    if (p) navigate(`/postulacion/${p.numero}`)
+    if (p) {
+      permitirSalida()
+      navigate(`/postulacion/${p.numero}`)
+    }
   }
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
@@ -110,7 +118,10 @@ export default function Postular() {
                   <Link to="/" className="font-semibold text-unal-verde-oscuro underline">Volver al catálogo</Link>
                 </p>
               )}
-              <button className="btn-primary mt-5" disabled={!mayor} onClick={declararMayorEdad}>Continuar</button>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link to={`/semilleros/${s.id}`} className="btn-outline">Cancelar</Link>
+                <button className="btn-primary" disabled={!mayor} onClick={declararMayorEdad}>Continuar</button>
+              </div>
             </section>
           )}
 
@@ -133,16 +144,19 @@ export default function Postular() {
                 </span>
               </label>
               {!autDatos && <p className="mt-4 text-sm text-unal-gris-oscuro" role="note">Sin esta autorización no verás el formulario ni se guardará ningún dato.</p>}
-              <button
-                className="btn-primary mt-5"
-                disabled={!autDatos}
-                onClick={() => {
-                  autorizar('postulacion')
-                  if (autAvisos) autorizar('avisos')
-                }}
-              >
-                Continuar
-              </button>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link to={`/semilleros/${s.id}`} className="btn-outline">Cancelar</Link>
+                <button
+                  className="btn-primary"
+                  disabled={!autDatos}
+                  onClick={() => {
+                    autorizar('postulacion')
+                    if (autAvisos) autorizar('avisos')
+                  }}
+                >
+                  Continuar
+                </button>
+              </div>
             </section>
           )}
 
@@ -196,6 +210,7 @@ export default function Postular() {
                 <Link to={`/semilleros/${s.id}`} className="btn-outline">Cancelar</Link>
                 <button type="submit" className="btn-primary">Enviar postulación</button>
               </div>
+              {aviso}
             </form>
           )}
         </>

@@ -31,7 +31,8 @@ const COLUMNAS: [string, string][][] = [
   ],
 ]
 
-const enlace = 'inline-block py-[1px] hover:underline focus-visible:underline'
+// Alto mínimo de 24 px por enlace (WCAG 2.2, criterio 2.5.8: tamaño del objetivo)
+const enlace = 'inline-block min-h-6 py-0.5 hover:underline focus-visible:underline'
 
 export default function Footer() {
   return (

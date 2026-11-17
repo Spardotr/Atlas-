@@ -290,9 +290,12 @@ describe('E7 · Privacidad (HU-35, HU-36)', () => {
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /estudiante\.demo@unal\.edu\.co/ }))
     await user.click(await screen.findByLabelText('Declaro que soy mayor de edad'))
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    // M5: al cambiar de paso, el foco va al título del paso nuevo
+    expect(await screen.findByRole('heading', { name: /Autorización de tratamiento de datos/ })).toHaveFocus()
     await user.click(await screen.findByLabelText(/Autorizo tratar mis datos personales/))
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await screen.findByText('Formulario de postulación')
+    expect(screen.getByRole('heading', { name: /Formulario de postulación/ })).toHaveFocus()
 
     await user.click(screen.getByRole('button', { name: /^ED/ }))
     await user.click(screen.getByRole('menuitem', { name: 'Mis datos y privacidad' }))

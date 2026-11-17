@@ -63,8 +63,8 @@ export default function Tablero() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={datos} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="periodo" tick={{ fontSize: 10 }} interval={0} tickFormatter={(v: string) => v.replace('Semestre ', '').replace(' (', '\n(')} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                <XAxis dataKey="periodo" tick={{ fontSize: 12 }} interval={0} tickFormatter={(v: string) => v.replace('Semestre ', '').replace(' (', '\n(')} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Bar dataKey="total" name="Postulaciones" radius={[2, 2, 0, 0]}>
                   <Cell fill="#565A5C" />

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import clsx from 'clsx'
@@ -10,6 +10,19 @@ import NoPermiso from '../components/NoPermiso'
 import { useCambiosSinGuardar } from '../components/CambiosSinGuardar'
 
 const MAX_MENSAJE = 500
+
+/** M5 (WCAG 2.4.3): al pasar a un paso nuevo, el foco va a su título para que el teclado y el lector de pantalla sigan el flujo. */
+function TituloPaso({ id, enfocar, className, children }: { id: string; enfocar: boolean; className: string; children: ReactNode }) {
+  const ref = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (enfocar) ref.current?.focus()
+  }, [enfocar])
+  return (
+    <h2 id={id} ref={ref} tabIndex={-1} className={className}>
+      {children}
+    </h2>
+  )
+}
 
 function Pasos({ actual }: { actual: 1 | 2 | 3 }) {
   const items = ['Mayoría de edad', 'Autorización de datos', 'Formulario']
@@ -53,12 +66,16 @@ export default function Postular() {
   // Control y libertad: avisar si se intenta salir con el formulario modificado y sin enviar
   const [inicial] = useState(JSON.stringify(form))
   const { aviso, permitirSalida } = useCambiosSinGuardar(JSON.stringify(form) !== inicial)
+  // Paso con el que se abrió la página: ese no recibe el foco; los siguientes sí.
+  const pasoInicial = useRef<number | null>(null)
 
   if (!s) return <NoPermiso mensaje="No encontramos este semillero" />
   if (!convocatoriaAbierta(s)) return <Navigate to={`/semilleros/${s.id}`} state={{ aviso: 'cerrada' }} replace />
 
   const autVigente = autorizacionVigente('postulacion')
   const paso: 1 | 2 | 3 = !perfil ? 1 : !autVigente ? 2 : 3
+  if (pasoInicial.current === null) pasoInicial.current = paso
+  const enfocarPaso = paso !== pasoInicial.current
   const previa = postulaciones.find((p) => p.correo === sesion?.correo && p.semilleroId === s.id && (p.estado === 'Enviada' || p.estado === 'Aceptada'))
 
   const validar = () => {
@@ -106,7 +123,7 @@ export default function Postular() {
 
           {paso === 1 && (
             <section className="card" aria-labelledby="p1">
-              <h2 id="p1" className="section-title mb-3">Mayoría de edad<HU id="HU-15" /></h2>
+              <TituloPaso id="p1" enfocar={enfocarPaso} className="section-title mb-3">Mayoría de edad<HU id="HU-15" /></TituloPaso>
               <p className="mb-4 text-sm">La universidad necesita esta declaración para tratar tus datos conforme a la ley.</p>
               <label className="flex cursor-pointer items-start gap-3 text-sm font-semibold">
                 <input type="checkbox" checked={mayor} onChange={(e) => setMayor(e.target.checked)} className="mt-0.5 h-5 w-5 accent-unal-verde-oscuro" />
@@ -127,7 +144,7 @@ export default function Postular() {
 
           {paso === 2 && (
             <section className="card" aria-labelledby="p2">
-              <h2 id="p2" className="section-title mb-3">Autorización de tratamiento de datos<HU id="HU-16" /></h2>
+              <TituloPaso id="p2" enfocar={enfocarPaso} className="section-title mb-3">Autorización de tratamiento de datos<HU id="HU-16" /></TituloPaso>
               <p className="mb-1 text-xs text-unal-gris-oscuro">Versión del aviso: {VERSION_AVISO}</p>
               <label className="mt-2 flex cursor-pointer items-start gap-3 text-sm">
                 <input type="checkbox" checked={autDatos} onChange={(e) => setAutDatos(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-unal-verde-oscuro" />
@@ -162,7 +179,7 @@ export default function Postular() {
 
           {paso === 3 && (
             <form onSubmit={enviar} noValidate className="card space-y-4" aria-labelledby="p3">
-              <h2 id="p3" className="section-title">Formulario de postulación<HU id="HU-17" /></h2>
+              <TituloPaso id="p3" enfocar={enfocarPaso} className="section-title">Formulario de postulación<HU id="HU-17" /></TituloPaso>
               <Campo label="Nombre completo *" error={errores.nombre} htmlFor="f-nombre">
                 <input id="f-nombre" value={form.nombre} onChange={(e) => set('nombre', e.target.value)} className={inputCls('nombre')} />
               </Campo>

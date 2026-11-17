@@ -46,10 +46,10 @@ function XIcon({ size = 12 }: { size?: number; strokeWidth?: number }) {
 function Marca({ compacto = false }: { compacto?: boolean }) {
   return (
     <span className="flex items-center gap-3">
-      <img src="/img/escudo-blanco.png" width={119} height={152} alt="" aria-hidden className={compacto ? 'h-12 w-auto' : 'h-[76px] w-auto'} />
+      <img src="/img/escudo-blanco.png" width={119} height={152} alt="" aria-hidden className={compacto ? 'h-10 w-auto min-[380px]:h-12' : 'h-[76px] w-auto'} />
       <span className="flex flex-col leading-none text-white" aria-hidden>
         <span className={compacto ? 'text-[9px] tracking-[0.2em]' : 'text-[11px] tracking-[0.22em]'}>UNIVERSIDAD</span>
-        <span className={compacto ? 'my-0.5 text-lg font-semibold tracking-[0.06em]' : 'my-1 text-[26px] font-semibold tracking-[0.06em]'}>NACIONAL</span>
+        <span className={compacto ? 'my-0.5 text-base font-semibold tracking-[0.06em] min-[380px]:text-lg' : 'my-1 text-[26px] font-semibold tracking-[0.06em]'}>NACIONAL</span>
         <span className={compacto ? 'text-[9px] tracking-[0.2em]' : 'text-[11px] tracking-[0.22em]'}>DE COLOMBIA</span>
       </span>
     </span>
@@ -159,7 +159,7 @@ export default function Header() {
           <Marca />
         </Link>
 
-        <div className="flex min-h-[84px] items-center gap-3 px-3 py-2 md:pl-[260px] md:pr-4">
+        <div className="flex min-h-[84px] items-center gap-2 px-3 py-2 min-[380px]:gap-3 md:pl-[260px] md:pr-4">
           <Link to="/" className="shrink-0 md:hidden" aria-label="Universidad Nacional de Colombia — Atlas, ir al inicio">
             <Marca compacto />
           </Link>
@@ -171,7 +171,8 @@ export default function Header() {
                 Atlas · Semilleros de Ingeniería
               </Link>
             </div>
-            <div className="truncate text-sm font-semibold md:hidden">Atlas · Semilleros</div>
+            {/* En móvil solo cabe el nombre corto («Atlas · Semilleros» se recortaba a «Atla…»); por debajo de 380 px se oculta y el header se compacta para no desbordar a 320 px (WCAG 1.4.10) */}
+            <div className="hidden whitespace-nowrap text-base font-semibold min-[380px]:block md:hidden">Atlas</div>
             <nav aria-label="Principal" className="mt-2 hidden md:block">
               <ul className="flex flex-wrap gap-x-7 gap-y-1">
                 {nav.map((n) => (
@@ -241,7 +242,7 @@ export default function Header() {
               )}
             </div>
           ) : (
-            <Link to={`/ingresar?next=${encodeURIComponent(loc.pathname + loc.search)}`} className="btn-verde whitespace-nowrap">
+            <Link to={`/ingresar?next=${encodeURIComponent(loc.pathname + loc.search)}`} className="btn-verde whitespace-nowrap max-[379px]:px-2.5 max-[379px]:text-xs">
               Iniciar sesión
             </Link>
           )}

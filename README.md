@@ -315,6 +315,96 @@ const PASOS = [
 > **Declaración de uso de IA:** Se solicitó realizar este análisis de código, inventario de componentes, revisión de diseño responsivo y verificación de heurísticas de Nielsen utilizando la herramienta de inteligencia artificial **Antigravity (Google DeepMind · modelo Gemini)** a partir de la inspección estática directa de los archivos en `src/`.
 
 ---
+## Módulo III: QC de Usabilidad y Accesibilidad
+
+> Aspectos 2 y 3. El aspecto 1 (reporte RITE) está en `REPORTE DE VALIDACIÓN DE USABILIDAD.pdf` y `Prueba de prototipo - Atlas .xlsx`.
+
+### 3.2 Evidencia: problema detectado vs. cambio aplicado en el prototipo
+
+**Base.** Entre el 12 y el 15 de noviembre de 2026 se probó el prototipo desplegado (`atlas-sisinfo.vercel.app`) con 10 estudiantes de pregrado (U1–U11; el código U8 no se usó) y 1 docente director de semillero (TD1). Todos los estudiantes completaron las 4 tareas sin ayuda; el director necesitó ayuda en 2 de 4. La ficha RITE registró 8 hallazgos (P01–P08), ninguno de gravedad 4, con frase literal del usuario e hipótesis de solución. El cuestionario TAM puntuó entre 4,33 y 4,57 sobre 5 en sus cuatro constructos, y la correlación de Spearman entre clics y facilidad de uso percibida fue −0,74 (p = 0,014).
+
+**Lo que falta para cumplir el aspecto 2.** La ficha RITE tiene la columna "Hipótesis de solución", pero no la columna que pide la entrega, "Cambio aplicado en el prototipo", y en los 8 hallazgos la casilla "¿Corregido antes del siguiente usuario?" dice **No**. El código en el commit `2919d85` (16 de noviembre) lo confirma: ninguna de las 8 hipótesis está implementada. Según la regla RITE del propio reporte, un hallazgo de gravedad 1 a 3 no obliga a corregir antes del siguiente usuario, así que el procedimiento fue correcto; pero el criterio "Validación con usuarios" (30 %) califica la **iteración**, y hoy no hay ninguna.
+
+**Tabla 3.2.** Las columnas "Cambio aplicado" y "Estado" quedan en *Pendiente* hasta que se implemente el cambio; cada fila indica el archivo exacto para hacerlo.
+
+| ID | Usuario · tarea | Problema detectado (resumen y cita) | Grav. | HU | Cambio aplicado en el prototipo | Dónde (archivo) | Estado |
+|---|---|---|---|---|---|---|---|
+| P01 | U2 · T1 | El campo de búsqueda conserva la consulta anterior; el usuario no sabe cómo empezar de nuevo. *"Que se eliminen las anteriores…"* | 2 | HU-02 | Botón "×" dentro del campo que borra el texto y el parámetro `q`, y devuelve el foco al campo. | `src/pages/Explorar.tsx` L75–L93 | Pendiente |
+| P02 | U4 · T1 | No sabe si buscar por tema o por nombre; la barra de búsqueda tiene más peso visual que las áreas. *"Que la barra sea algo secundario y no lo principal."* | 3 | HU-01, HU-02 | Mover "Áreas temáticas" arriba del campo de búsqueda y cambiar el texto de ejemplo a "Busca por tema, nombre o línea de investigación". | `src/pages/Explorar.tsx` L73–L110 | Pendiente |
+| P03 | U6 · T1 | Cree que al elegir un área se anula la palabra clave; los filtros quedan "abajo". *"Que cuando uno selecciona por área no invalide el filtro por palabra."* | 3 | HU-01, HU-02 | El código ya combina ambos filtros (`filtrados`, L33–L40), así que el problema es de **retroalimentación**: mostrar sobre el listado una fila "Filtros activos: robótica × · Robótica y control ×" con botón para quitar cada uno. | `src/pages/Explorar.tsx` L113–L120 | Pendiente |
+| P04 | U7 · T1 | Busca "a ciegas" sin saber qué términos existen. *"Que con solo escribir algunas palabras ya empiece a mostrar, como Google."* | 2 | HU-02 | Lista de sugerencias (`<datalist>` o menú `role="listbox"`) con nombres de semilleros, áreas y líneas, filtrada mientras se escribe. | `src/pages/Explorar.tsx` L75–L93; datos en `src/data/seed.ts` | Pendiente |
+| P05 | TD1 · TD1/TD2 | No entiende "Reclamar ficha" (*"creo que es crear ficha"*); el teléfono recién guardado no aparece en la vista previa. | 2 | HU-29, HU-30 | Renombrar el botón a "Verificar mi ficha" en panel, página y diálogo, y refrescar la vista previa al guardar el contacto. | `src/pages/DirectorPanel.tsx` L30; `src/pages/DirectorFicha.tsx` L103, L129, L138, L143 | Pendiente |
+| P06 | U10 · T2 | En "Requisitos" aparece "Sin información" y no se sabe si no hay requisitos o si no se cargaron. | 2 | HU-04 | Dos textos distintos: "Sin requisitos previos (entrada libre)" cuando el director lo declara, y "El director aún no ha cargado esta información" cuando la ficha está precargada. | `src/pages/Ficha.tsx` L21, L69–L73 | Pendiente |
+| P07 | U10 · T1 | Las áreas temáticas ocupan mucho espacio y "se pierden" los semilleros; el diseño parece "muy sobrio". | 2 (estético) | HU-01 | Decisión: **no se cambia**. Se mantiene el diseño institucional de la UNAL (coherencia con Hermes y con la identidad de la sede); el bloque de áreas se mueve y compacta como parte de P02. | — | Descartado con justificación |
+| P08 | U11 · T1 | Búsquedas sin coincidencia exacta ("bioingeniería", "ingeniería") devuelven pantalla vacía. *"¿Qué hago?"* | 3 | HU-02 | En el estado vacío, mostrar las áreas temáticas y hasta 4 semilleros cuyo nombre o área contengan parte del término (coincidencia parcial sin tildes). | `src/pages/Explorar.tsx` L122–L136 | Pendiente |
+
+**Cómo cerrar el aspecto con una iteración real (propuesta).** Implementar P01, P03, P05, P06 y P08 (son cambios de menos de una hora cada uno y cubren los tres hallazgos de gravedad 3), anotar el commit en la columna "Estado", y repetir la tarea T1 con 2 usuarios nuevos (U12 y U13) y la tarea TD1 con el mismo director. Con eso la tabla queda con evidencia "antes / después" y se cumple literalmente el enunciado: *problema detectado → cambio aplicado*. El interruptor "Mostrar etiquetas de historias de usuario" del Modo evaluación sirve para tomar las capturas de antes y después con la HU visible.
+
+**Correcciones menores al reporte.** (a) En la tabla de registros el director aparece con las tareas T1–T4; deben llamarse TD1–TD4 para que coincidan con su tabla de tareas. (b) Explicar en una línea por qué no existe U8. (c) El enunciado del hito pide "al menos 2 usuarios reales"; vale la pena decir explícitamente que se superó con 11.
+
+---
+
+### 3.3 Auditoría básica de accesibilidad (WCAG 2.1, nivel AA)
+
+**Método.** Revisión del prototipo desplegado el 12 de noviembre de 2026 (13 pantallas que cubren las 22 HU Must, abiertas desde `/evaluacion`) con un script que calculó la relación de contraste de todo el texto visible según la fórmula de WCAG, inventario de tamaños de fuente calculados, y prueba manual de navegación por teclado (Tab, Shift+Tab, Enter, Escape). Los hallazgos se contrastaron con el código fuente del commit `2919d85`. No se usó lector de pantalla.
+
+#### 3.3.1 Contraste de color (1.4.3 y 1.4.11)
+
+| Elemento | Colores | Relación | Mínimo | Resultado |
+|---|---|---|---|---|
+| Texto del cuerpo | `#565A5C` sobre `#F4F4F3` | 6,33:1 | 4,5:1 | Cumple |
+| Botón primario y chips "Convocatoria abierta" | blanco sobre `#466B3F` | 6,11:1 | 4,5:1 | Cumple |
+| Barra superior gris (enlaces de 12 px) | blanco sobre `#6B6B6B` | 5,33:1 | 4,5:1 | Cumple (es el valor más bajo del sitio) |
+| Mensajes de error | `#A61C31` sobre blanco | > 4,5:1 | 4,5:1 | Cumple |
+| Texto de ejemplo del buscador principal | `text-gray-400` (`#9CA3AF`) sobre blanco | **2,54:1** | 4,5:1 | **No cumple** |
+| Texto de ejemplo del buscador del encabezado | blanco al 80 % sobre `#676767` | **4,31:1** | 4,5:1 | **No cumple** (por poco) |
+| Bordes de campos (`.input`, chips de área) | `#B1B2B0` sobre blanco | **2,13:1** | 3:1 | **No cumple** |
+| Indicador de foco sobre encabezado y pie | `#466B3F` sobre `#5F5F5F` y `#6B6B6B` | **1,04:1 y 1,15:1** | 3:1 | **No cumple** |
+
+Resultado: **0 fallos de contraste en texto normal** en las 13 pantallas; 4 fallos en texto de ejemplo, bordes e indicador de foco.
+
+#### 3.3.2 Tamaños de fuente y escalado (1.4.4)
+
+- Tamaño base de 16 px (`html { font-size: 100% }`) y todo en unidades relativas, así que el zoom del navegador funciona.
+- El Panel de Accesibilidad permite escalar el texto entre 85 % y 150 % (`A11yPanel.tsx`) y activar un modo de alto contraste que fuerza texto `#000` y bordes negros (`index.css`, reglas `.hc`).
+- En la pantalla Explorar hay 82 elementos de texto a 12 px (barra superior, etiquetas, pie de página) y 2 a 11 px ("UNIVERSIDAD / DE COLOMBIA" en el escudo). En el tablero de la Vicedecanatura los ejes del gráfico van a 10 y 11 px.
+- WCAG no fija un tamaño mínimo, pero 12 px en enlaces de navegación con peso 600 y 10 px en ejes está por debajo de lo recomendado en la práctica (14 px para cuerpo, 12 px para notas).
+
+#### 3.3.3 Navegación por teclado (2.1.1, 2.4.3, 2.4.7)
+
+| Comprobación | Resultado | Evidencia |
+|---|---|---|
+| Enlace "Saltar al contenido" como primer elemento | Cumple | `Layout.tsx` L20–L22; primer Tab lo muestra |
+| Zonas con nombre (encabezado, navegación principal, contenido, paginación, pie) | Cumple | `aria-label` en `<header>`, `<nav>`, `<footer>` |
+| Orden de tabulación sin `tabindex` positivos; 77 elementos enfocables en Explorar | Cumple | Inspección del DOM |
+| Indicador de foco visible, 3 px | Cumple sobre fondo claro; **falla** sobre encabezado y pie | `index.css` L9–L11 (un solo color para todo el sitio) |
+| Chips de área con estado (`aria-pressed`), pasos con `aria-current="step"`, interruptor con `role="switch"` | Cumple | `Explorar.tsx` L103; `Postular.tsx` L22; `DirectorConvocatoria.tsx` L40 |
+| Diálogos: `role="dialog"`, `aria-modal`, foco al abrir, Escape cierra y devuelve el foco | Cumple | `UI.tsx` L48–L87 |
+| Diálogos: el foco **se queda dentro** mientras está abierto | **No cumple** | Con 12 tabulaciones el foco sale al pie de página (`UI.tsx` no tiene trampa de foco) |
+| Al cambiar de paso en la postulación, el foco va al nuevo paso | **No cumple** | El foco vuelve al `<body>` |
+| Errores de formulario anunciados (`role="alert"`) | Cumple | `UI.tsx` L122–L126 |
+| Errores ligados al campo (`aria-invalid`, `aria-describedby`), obligatorios con `required`, foco al primer error | **No cumple** | `Campo` solo pinta el texto; el asterisco es visual |
+| Idioma declarado | Cumple | `<html lang="es-CO">` |
+| Imágenes con texto alternativo; íconos y enlaces sociales con nombre | Cumple | `alt` y `aria-label` en todos; avisan "abre unal.edu.co" |
+| Jerarquía de títulos | Observación | En Explorar salta de `h1` a `h3` |
+
+#### 3.3.4 Hallazgos y corrección
+
+| # | Hallazgo | Criterio | Prioridad | Corrección (archivo) |
+|---|---|---|---|---|
+| A1 | Foco invisible sobre encabezado y pie | 2.4.7 | Alta | `index.css`: añadir `box-shadow: 0 0 0 3px #fff, 0 0 0 6px #466B3F` al `:focus-visible` (anillo doble visible en claro y oscuro) |
+| A2 | Bordes de campos y chips a 2,13:1 | 1.4.11 | Alta | `tailwind.config.js`: usar `#8A8A8A` o más oscuro para bordes de `.input` y chips; `#B1B2B0` puede seguir en separadores decorativos |
+| A3 | Texto de ejemplo a 2,54:1 y 4,31:1 | 1.4.3 | Media | `index.css` `.input`: `placeholder:text-gray-500` (`#6B7280`, 4,8:1); `Header.tsx` L176–L188: subir opacidad a 100 % |
+| A4 | Errores no ligados al campo; sin `required`; foco en el botón tras fallar | 1.3.1, 3.3.1, 4.1.2 | Alta | `UI.tsx` `Campo`: generar `id` del error, pasar `aria-describedby` y `aria-invalid` al control; `Postular.tsx`: `required` en los 5 campos y `focus()` al primer error |
+| A5 | El foco no sigue el cambio de paso | 2.4.3 | Media | `Postular.tsx`: `ref` al título del paso con `tabIndex={-1}` y `focus()` en el `useEffect` de `paso` |
+| A6 | Diálogo sin trampa de foco | 2.4.3 | Media | `UI.tsx` `Dialog`: en `onKey`, si es Tab, ciclar entre el primer y último elemento enfocable del diálogo |
+| A7 | `h1` → `h3` en Explorar | 1.3.1 | Baja | `Explorar.tsx`: `h2` "Resultados" antes del listado, o tarjetas con `h2` |
+| A8 | Texto a 10–12 px en barra superior, pie y ejes del gráfico | 1.4.4 (práctica) | Baja | Subir etiquetas a 13–14 px y ejes de `Tablero.tsx` a 12 px |
+| A9 | Casillas de 16×16 y 20×20 px | 2.5.8 (WCAG 2.2) | Baja | Cumple porque la etiqueta es pulsable; opcional llevarlas a 24 px |
+
+**Pendiente para una segunda ronda:** prueba con lector de pantalla (NVDA), vista a 320 px de ancho y zoom al 200 % (1.4.10), y descripción textual del gráfico de barras del tablero (1.1.1).
+
+**Conclusión del aspecto 3.** El prototipo parte de una base sólida: sin fallos de contraste en texto, estructura semántica completa, enlace de salto, diálogos con gestión de foco y panel propio de escalado y alto contraste. Los 4 hallazgos de prioridad alta (A1, A2, A4 y, por su efecto en usuarios de teclado, A6) se corrigen en 3 archivos (`index.css`, `tailwind.config.js`, `UI.tsx`) sin tocar la lógica.
 
 ## Módulo IV: Persistencia de soporte
 

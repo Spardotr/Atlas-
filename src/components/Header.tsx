@@ -1,25 +1,32 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, Facebook, Instagram, LogOut, MapPin, Menu, Search, ShieldCheck, X, Youtube } from 'lucide-react'
+import { ChevronDown, Facebook, Instagram, LogOut, MapPin, Menu, ShieldCheck, X, Youtube } from 'lucide-react'
 import clsx from 'clsx'
 import { useStore } from '../store'
 
-const ENLACES_SUPERIORES = ['Aspirantes', 'Estudiantes', 'Egresados', 'Docentes', 'Administrativos']
+// URLs oficiales tomadas de unal.edu.co
+const ENLACES_SUPERIORES: { t: string; href: string }[] = [
+  { t: 'Aspirantes', href: 'https://aspirantes.unal.edu.co/' },
+  { t: 'Estudiantes', href: 'https://estudiantes.unal.edu.co/' },
+  { t: 'Egresados', href: 'http://egresados.unal.edu.co/' },
+  { t: 'Docentes', href: 'https://docentes.unal.edu.co/' },
+  { t: 'Administrativos', href: 'https://administrativos.unal.edu.co/' },
+]
 const SITIO_UNAL = 'https://unal.edu.co'
 
-/** Redes oficiales: círculos grises como en unal.edu.co (enlazan a la portada de la Universidad). */
+/** Redes oficiales: círculos grises como en unal.edu.co (enlazan a las cuentas oficiales de la Universidad). */
 function Redes() {
   const items = [
-    { n: 'Facebook', I: Facebook },
-    { n: 'X (Twitter)', I: XIcon },
-    { n: 'YouTube', I: Youtube },
-    { n: 'Instagram', I: Instagram },
+    { n: 'Facebook', I: Facebook, href: 'https://www.facebook.com/UNALOficial' },
+    { n: 'X (Twitter)', I: XIcon, href: 'https://x.com/UNALoficial' },
+    { n: 'YouTube', I: Youtube, href: 'https://www.youtube.com/@UNALoficial' },
+    { n: 'Instagram', I: Instagram, href: 'https://www.instagram.com/unaloficial/' },
   ]
   return (
     <ul className="ml-3 flex items-center gap-1.5" aria-label="Redes sociales">
-      {items.map(({ n, I }) => (
+      {items.map(({ n, I, href }) => (
         <li key={n}>
-          <a href={SITIO_UNAL} target="_blank" rel="noopener noreferrer" aria-label={`${n} de la Universidad Nacional (abre unal.edu.co)`} className="flex h-5 w-5 items-center justify-center rounded-full bg-[#9a9a9a] text-[#5c5c5c] hover:bg-white">
+          <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${n} de la Universidad Nacional (se abre en una pestaña nueva)`} className="flex h-5 w-5 items-center justify-center rounded-full bg-[#9a9a9a] text-[#5c5c5c] hover:bg-white">
             <I size={11} strokeWidth={2.4} aria-hidden />
           </a>
         </li>
@@ -39,7 +46,7 @@ function XIcon({ size = 12 }: { size?: number; strokeWidth?: number }) {
 function Marca({ compacto = false }: { compacto?: boolean }) {
   return (
     <span className="flex items-center gap-3">
-      <img src="/img/escudo-blanco.png" alt="" aria-hidden className={compacto ? 'h-12 w-auto' : 'h-[76px] w-auto'} />
+      <img src="/img/escudo-blanco.png" width={119} height={152} alt="" aria-hidden className={compacto ? 'h-12 w-auto' : 'h-[76px] w-auto'} />
       <span className="flex flex-col leading-none text-white" aria-hidden>
         <span className={compacto ? 'text-[9px] tracking-[0.2em]' : 'text-[11px] tracking-[0.22em]'}>UNIVERSIDAD</span>
         <span className={compacto ? 'my-0.5 text-lg font-semibold tracking-[0.06em]' : 'my-1 text-[26px] font-semibold tracking-[0.06em]'}>NACIONAL</span>
@@ -53,7 +60,6 @@ export default function Header() {
   const { role, sesion, logout } = useStore()
   const navigate = useNavigate()
   const loc = useLocation()
-  const [q, setQ] = useState('')
   const [menuUsuario, setMenuUsuario] = useState(false)
   const [menuMovil, setMenuMovil] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -89,12 +95,6 @@ export default function Header() {
             { to: '/como-funciona', label: 'Cómo funciona' },
           ]
 
-  const buscar = (e: React.FormEvent) => {
-    e.preventDefault()
-    navigate(q.trim() ? `/?q=${encodeURIComponent(q.trim())}` : '/')
-    setMenuMovil(false)
-  }
-
   const iniciales = (sesion?.nombre ?? '?')
     .split(' ')
     .filter(Boolean)
@@ -111,11 +111,11 @@ export default function Header() {
       <div className="hidden h-8 border-b border-black/10 bg-[#6b6b6b] text-xs text-white md:block">
         <div className="flex h-full items-center justify-end pr-4">
           <ul className="flex h-full items-stretch">
-            {ENLACES_SUPERIORES.map((t) => (
+            {ENLACES_SUPERIORES.map(({ t, href }) => (
               <li key={t} className="flex items-center border-l border-white/30 first:border-l-0">
-                <a href={SITIO_UNAL} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 font-semibold hover:underline">
+                <a href={href} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 font-semibold hover:underline">
                   {t}
-                  <span className="sr-only"> (abre unal.edu.co en una pestaña nueva)</span>
+                  <span className="sr-only"> (se abre en una pestaña nueva)</span>
                 </a>
               </li>
             ))}
@@ -173,20 +173,6 @@ export default function Header() {
             </nav>
           </div>
 
-          <form onSubmit={buscar} role="search" className="hidden items-center rounded bg-[#676767] focus-within:ring-2 focus-within:ring-white lg:flex">
-            <label htmlFor="busca-header" className="sr-only">
-              Buscar semilleros
-            </label>
-            <Search size={16} className="ml-3 text-white/80" aria-hidden />
-            <input
-              id="busca-header"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar semilleros"
-              className="w-56 bg-transparent px-3 py-2 text-sm text-white placeholder:text-white/80 focus:outline-none"
-            />
-          </form>
-
           {sesion ? (
             <div className="relative" ref={menuRef}>
               <button
@@ -233,7 +219,7 @@ export default function Header() {
           )}
 
           <a href={SITIO_UNAL} target="_blank" rel="noopener noreferrer" className="hidden shrink-0 md:block" aria-label="Escudo de la República de Colombia (abre unal.edu.co)">
-            <img src="/img/sello-colombia.png" alt="" aria-hidden className="h-[66px] w-[66px]" />
+            <img src="/img/sello-colombia.png" width={140} height={140} alt="" aria-hidden className="h-[66px] w-[66px]" />
           </a>
 
           <button className="rounded p-2 hover:bg-white/10 md:hidden" aria-label="Menú" onClick={() => setMenuMovil((v) => !v)}>
@@ -243,10 +229,6 @@ export default function Header() {
 
         {menuMovil && (
           <div className="border-t border-white/20 px-4 pb-4 md:hidden">
-            <form onSubmit={buscar} role="search" className="my-3 flex items-center rounded bg-[#676767] focus-within:ring-2 focus-within:ring-white">
-              <Search size={16} className="ml-3 text-white/80" aria-hidden />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar semilleros" aria-label="Buscar semilleros" className="w-full bg-transparent px-3 py-2 text-sm text-white placeholder:text-white/80 focus:outline-none" />
-            </form>
             <ul>
               {nav.map((n) => (
                 <li key={n.to}>

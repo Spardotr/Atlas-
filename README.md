@@ -719,7 +719,7 @@ Todo el texto de lectura supera 4,5:1; el valor más bajo es 4,83:1 (texto de ej
 
 ## Módulo IV: Persistencia de soporte
 
-Este módulo presenta el esquema de datos mínimo y el mapa de API que soportan el prototipo de Atlas, junto con la arquitectura que los sustenta. Atlas se plantea como un monolito modular sobre PostgreSQL, desplegado en contenedores y dimensionado para 100 usuarios concurrentes.El límite de 100 usuarios concurrentes se estima a partir de la población de la Facultad de Ingeniería, cerca de 10.000 estudiantes según sus más de 1.000 admitidos por semestre. Si el 30 % entra durante una convocatoria de dos semanas, con tres sesiones de 10 minutos cada uno y el 20 % del tráfico diario en la hora pico, resultan unos 30 usuarios simultáneos. Con toda la sede Bogotá (28.064 estudiantes de pregrado en 2024-2) serían 84, de modo que 100 deja margen incluso en ese escenario.
+Este módulo presenta el esquema de datos mínimo y el mapa de API que soportan el prototipo de Atlas, junto con la arquitectura que los sustenta. Atlas se plantea como un monolito modular sobre PostgreSQL, desplegado en contenedores y dimensionado para 100 usuarios concurrentes. El límite de 100 usuarios concurrentes se estima a partir de la población de la Facultad de Ingeniería, cerca de 10.000 estudiantes según sus más de 1.000 admitidos por semestre. Si el 30 % entra durante una convocatoria de dos semanas, con tres sesiones de 10 minutos cada uno y el 20 % del tráfico diario en la hora pico, resultan unos 30 usuarios simultáneos. Con toda la sede Bogotá (28.064 estudiantes de pregrado en 2024-2) serían 84, de modo que 100 deja margen incluso en ese escenario.
 
 ### 4.1 Esquema de datos mínimo
 

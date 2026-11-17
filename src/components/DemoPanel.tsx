@@ -104,7 +104,7 @@ export default function DemoPanel() {
                         {c.enlace.texto}
                       </Link>
                     )}
-                    <p className="mt-1 text-[11px] text-unal-gris-oscuro">{fmtFechaHora(c.fechaHora)}</p>
+                    <p className="mt-1 text-xs text-unal-gris-oscuro">{fmtFechaHora(c.fechaHora)}</p>
                   </li>
                 ))}
               </ul>

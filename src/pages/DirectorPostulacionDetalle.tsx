@@ -50,7 +50,7 @@ export default function DirectorPostulacionDetalle() {
               ['Mensaje', p.mensaje || 'Sin mensaje'],
             ].map(([k, v]) => (
               <div key={k} className="border-b py-3 sm:grid sm:grid-cols-[13rem_1fr]">
-                <dt className="text-xs font-bold uppercase tracking-[0.14em] text-unal-gris-oscuro">{k}</dt>
+                <dt className="text-sm font-semibold text-unal-gris-oscuro">{k}</dt>
                 <dd className="mt-1 whitespace-pre-wrap sm:mt-0">{v}</dd>
               </div>
             ))}

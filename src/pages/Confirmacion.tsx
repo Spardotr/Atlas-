@@ -13,7 +13,7 @@ export default function Confirmacion() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 text-center">
       <CheckCircle2 size={56} className="mx-auto text-unal-verde-oscuro" />
-      <h1 className="mt-4 text-2xl font-bold">Postulación enviada</h1>
+      <h1 className="mt-4 text-3xl font-bold leading-tight">Postulación enviada</h1>
       <p className="mt-2 text-sm text-unal-gris-oscuro">Guarda tu número de postulación.</p>
       <p className="mt-4 text-3xl font-bold tracking-wider text-unal-verde-oscuro" data-testid="numero-postulacion">{p.numero}</p>
       <dl className="card mx-auto mt-6 max-w-md text-left text-sm">

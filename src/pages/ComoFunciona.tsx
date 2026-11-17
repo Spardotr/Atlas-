@@ -16,7 +16,7 @@ export default function ComoFunciona() {
         {PASOS.map(([t, d], i) => (
           <li key={t} className="card flex gap-4">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-unal-verde text-lg font-bold">{i + 1}</span>
-            <div><h2 className="font-semibold">{t}</h2><p className="text-sm text-unal-gris-oscuro">{d}</p></div>
+            <div><h2 className="text-lg font-semibold">{t}</h2><p className="text-sm text-unal-gris-oscuro">{d}</p></div>
           </li>
         ))}
       </ol>

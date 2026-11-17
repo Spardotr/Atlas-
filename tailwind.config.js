@@ -3,6 +3,11 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Escala de fuente ampliada (antes xs = 12 px, sm = 14 px): mínimo 14 px, texto de cuerpo 16 px.
+      fontSize: {
+        xs: ['0.875rem', { lineHeight: '1.25rem' }],
+        sm: ['1rem', { lineHeight: '1.5rem' }],
+      },
       colors: {
         'unal-verde': '#94B43B',
         'unal-rojo': '#A61C31',

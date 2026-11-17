@@ -9,7 +9,7 @@ export function HU({ id }: { id: string }) {
   return (
     <span
       title={`Historia de usuario ${id}`}
-      className="ml-1 inline-flex items-center rounded bg-unal-vino px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-white"
+      className="ml-1 inline-flex items-center rounded bg-unal-vino px-1.5 py-0.5 align-middle text-xs font-bold leading-none text-white"
     >
       {id}
     </span>
@@ -17,16 +17,18 @@ export function HU({ id }: { id: string }) {
 }
 
 type BadgeTone = 'verde' | 'gris' | 'rojo' | 'vino' | 'outline'
-export function Badge({ tone = 'gris', children, title }: { tone?: BadgeTone; children: ReactNode; title?: string }) {
+/** Indicador de estado: texto de color con un punto, sin caja ni borde, para que no parezca un botón. */
+export function Badge({ tone = 'gris', children, title, punto = true }: { tone?: BadgeTone; children: ReactNode; title?: string; punto?: boolean }) {
   const tones: Record<BadgeTone, string> = {
-    verde: 'bg-unal-verde-oscuro text-white',
-    gris: 'bg-unal-gris-claro/40 text-unal-texto',
-    rojo: 'bg-unal-rojo text-white',
-    vino: 'bg-unal-vino text-white',
-    outline: 'border border-unal-gris-oscuro text-unal-texto',
+    verde: 'text-unal-verde-oscuro',
+    gris: 'text-unal-gris-oscuro',
+    rojo: 'text-unal-rojo',
+    vino: 'text-unal-vino',
+    outline: 'text-unal-texto',
   }
   return (
-    <span title={title} className={clsx('inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold', tones[tone])}>
+    <span title={title} className={clsx('inline-flex cursor-default select-none items-center gap-1.5 text-xs font-semibold', tones[tone])}>
+      {punto && <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-current" />}
       {children}
     </span>
   )
@@ -35,12 +37,12 @@ export function Badge({ tone = 'gris', children, title }: { tone?: BadgeTone; ch
 export function PageTitle({ children, sub, hu }: { children: ReactNode; sub?: ReactNode; hu?: string[] }) {
   return (
     <div className="mb-6">
-      <h1 className="text-xl font-bold uppercase tracking-[0.16em] text-unal-texto">
+      <h1 className="text-3xl font-bold leading-tight text-unal-texto">
         {children}
         {hu?.map((h) => <HU key={h} id={h} />)}
       </h1>
       <div className="mt-2 h-1 w-14 bg-unal-verde" />
-      {sub && <p className="mt-3 max-w-3xl text-sm text-unal-gris-oscuro">{sub}</p>}
+      {sub && <p className="mt-3 max-w-3xl text-base text-unal-gris-oscuro">{sub}</p>}
     </div>
   )
 }
@@ -74,7 +76,7 @@ export function Dialog({
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={titulo} className="max-h-[90vh] w-full max-w-lg overflow-auto rounded bg-white p-6 shadow-xl">
         <div className="mb-3 flex items-start justify-between gap-4">
-          <h2 className="text-lg font-bold">{titulo}</h2>
+          <h2 className="text-xl font-semibold">{titulo}</h2>
           <button onClick={onClose} aria-label="Cerrar" className="rounded p-1 hover:bg-gray-100">
             <X size={18} />
           </button>

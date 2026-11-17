@@ -130,7 +130,7 @@ export default function MiCuenta() {
                 ['Declaración de mayoría de edad', fmtFechaHora(perfil.mayorEdadAt)],
               ].map(([k, v]) => (
                 <div key={k} className="border-b py-3 sm:grid sm:grid-cols-[14rem_1fr]">
-                  <dt className="text-xs font-bold uppercase tracking-[0.14em] text-unal-gris-oscuro">{k}</dt>
+                  <dt className="text-sm font-semibold text-unal-gris-oscuro">{k}</dt>
                   <dd data-testid={`dato-${k}`}>{v}</dd>
                 </div>
               ))}
@@ -194,7 +194,7 @@ export default function MiCuenta() {
           )}
           {eventos.length > 0 && (
             <div className="card mt-5">
-              <h3 className="section-title mb-2 text-xs">Historial</h3>
+              <h3 className="mb-2 text-lg font-semibold">Historial</h3>
               <ul className="space-y-2 text-sm">
                 {eventos.map((e, i) => (
                   <li key={i} className="border-b pb-2 last:border-0"><span className="text-xs text-unal-gris-oscuro">{fmtFechaHora(e.fecha)}</span><br />{e.texto}</li>

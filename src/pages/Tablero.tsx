@@ -49,7 +49,7 @@ export default function Tablero() {
 
       <div className="grid gap-5 lg:grid-cols-3">
         <section className="card" aria-labelledby="k1">
-          <h2 id="k1" className="section-title mb-1 text-xs">Crecimiento de postulaciones<HU id="HU-24" /></h2>
+          <h2 id="k1" className="section-title mb-1">Crecimiento de postulaciones<HU id="HU-24" /></h2>
           <p className="text-xs text-unal-gris-oscuro">Datos al {corte} · Meta: +{META_CRECIMIENTO} %</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <span className="flex items-center text-4xl font-bold" data-testid="variacion">
@@ -76,7 +76,7 @@ export default function Tablero() {
         </section>
 
         <section className="card" aria-labelledby="k2">
-          <h2 id="k2" className="section-title mb-1 text-xs">Fichas verificadas por su director<HU id="HU-25" /></h2>
+          <h2 id="k2" className="section-title mb-1">Fichas verificadas por su director<HU id="HU-25" /></h2>
           <p className="text-xs text-unal-gris-oscuro">Datos al {corte} · Meta: {META_VERIFICADAS} %</p>
           <p className="mt-3 text-4xl font-bold" data-testid="pct-verificadas">{pctVerif.toFixed(0)} %</p>
           <p className="text-sm">{verificadas} de {semilleros.length} fichas verificadas</p>
@@ -90,7 +90,7 @@ export default function Tablero() {
         </section>
 
         <section className="card" aria-labelledby="k3">
-          <h2 id="k3" className="section-title mb-1 text-xs">Postulaciones con autorización registrada<HU id="HU-26" /></h2>
+          <h2 id="k3" className="section-title mb-1">Postulaciones con autorización registrada<HU id="HU-26" /></h2>
           <p className="text-xs text-unal-gris-oscuro">Datos al {corte} · Meta: {META_AUTORIZACION} %</p>
           <p className={`mt-3 text-4xl font-bold ${autRoja ? 'text-unal-rojo' : 'text-unal-verde-oscuro'}`} data-testid="pct-autorizacion">{pctAut.toFixed(0)} %</p>
           <p className="text-sm">{delActual.length - sinAut} de {delActual.length} postulaciones del semestre actual</p>

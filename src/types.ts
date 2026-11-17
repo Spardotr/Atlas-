@@ -54,6 +54,8 @@ export interface Semillero {
   estadoFicha: 'Verificada' | 'Precargada'
   actualizadoEn: string // ISO yyyy-mm-dd
   contacto?: Contacto
+  sitioWeb?: string // URL https opcional
+  logo?: string // imagen (data URL) opcional
 }
 
 export interface Perfil {

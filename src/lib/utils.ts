@@ -64,3 +64,60 @@ export function comparaAlfabetico(a: string, b: string): number {
 export function uid(prefix = 'id'): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`
 }
+
+/** Normaliza una URL escrita por el usuario. Devuelve null si no es válida. Solo admite http/https. */
+export function normalizarUrl(texto: string): string | null {
+  const t = texto.trim()
+  if (!t) return null
+  const conEsquema = /^[a-z][a-z0-9+.-]*:\/\//i.test(t) ? t : `https://${t}`
+  try {
+    const u = new URL(conEsquema)
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null
+    if (!u.hostname.includes('.')) return null
+    return u.toString()
+  } catch {
+    return null
+  }
+}
+
+/** Lee una imagen y la reduce a un máximo de `max` px por lado (PNG con transparencia). Devuelve un data URL. */
+export function reducirImagen(file: File, max = 256): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(img.width * k))
+      canvas.height = Math.max(1, Math.round(img.height * k))
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return reject(new Error('canvas'))
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('imagen'))
+    }
+    img.src = url
+  })
+}
+
+/**
+ * Convierte un número de WhatsApp escrito por el usuario en el formato que pide wa.me (solo dígitos, con indicativo).
+ * Un celular colombiano de 10 dígitos recibe el indicativo 57. Devuelve null si no parece un número válido.
+ */
+export function numeroWhatsApp(texto: string): string | null {
+  let d = texto.replace(/[^\d+]/g, '')
+  const conMas = d.startsWith('+')
+  d = d.replace(/\D/g, '')
+  if (d.startsWith('00')) d = d.slice(2)
+  else if (!conMas && d.length === 10) d = `57${d}`
+  return d.length >= 11 && d.length <= 15 ? d : null
+}
+
+export function enlaceWhatsApp(texto: string, mensaje: string): string | null {
+  const n = numeroWhatsApp(texto)
+  return n ? `https://wa.me/${n}?text=${encodeURIComponent(mensaje)}` : null
+}

@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store'
-import { fmtFecha } from '../lib/utils'
+import { fmtFecha, normalizarUrl, numeroWhatsApp, reducirImagen } from '../lib/utils'
 import { Alerta, Campo, Dialog, HU, PageTitle } from '../components/UI'
 import { BadgeConvocatoria, SelloFicha } from '../components/Semillero'
 import NoPermiso from '../components/NoPermiso'
+import { useCambiosSinGuardar } from '../components/CambiosSinGuardar'
 import type { Semillero } from '../types'
 
 const CORREO_VICE = 'vicedecanatura.demo@unal.edu.co'
@@ -20,13 +21,53 @@ function FormularioFicha({ s }: { s: Semillero }) {
     whatsapp: s.contacto?.whatsapp ?? '',
     publicarTelefono: s.contacto?.publicarTelefono ?? false,
     publicarWhatsapp: s.contacto?.publicarWhatsapp ?? false,
+    sitioWeb: s.sitioWeb ?? '',
+    logo: s.logo ?? '',
   })
+  const [errores, setErrores] = useState<{ sitioWeb?: string; logo?: string; whatsapp?: string }>({})
+
+  const elegirLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const archivo = e.target.files?.[0]
+    e.target.value = ''
+    if (!archivo) return
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(archivo.type)) {
+      setErrores((x) => ({ ...x, logo: 'El logo debe ser una imagen PNG, JPG o WebP' }))
+      return
+    }
+    if (archivo.size > 2 * 1024 * 1024) {
+      setErrores((x) => ({ ...x, logo: 'La imagen pesa más de 2 MB. Elige una más liviana' }))
+      return
+    }
+    try {
+      const logo = await reducirImagen(archivo)
+      setF((x) => ({ ...x, logo }))
+      setErrores((x) => ({ ...x, logo: undefined }))
+    } catch {
+      setErrores((x) => ({ ...x, logo: 'No pudimos leer la imagen. Prueba con otra' }))
+    }
+  }
 
   // P05: aviso explícito cuando se guarda un contacto que aún no se publica
   const [avisoContacto, setAvisoContacto] = useState('')
 
+  // Control y libertad: avisar si se intenta salir con cambios sin guardar
+  const [guardado, setGuardado] = useState(JSON.stringify(f))
+  const { aviso } = useCambiosSinGuardar(JSON.stringify(f) !== guardado)
+
   const guardar = (e: React.FormEvent) => {
     e.preventDefault()
+    const sitio = f.sitioWeb.trim() ? normalizarUrl(f.sitioWeb) : ''
+    if (sitio === null) {
+      setErrores((x) => ({ ...x, sitioWeb: 'Escribe una dirección válida, por ejemplo https://mi-semillero.unal.edu.co' }))
+      return
+    }
+    if (f.whatsapp.trim() && !numeroWhatsApp(f.whatsapp)) {
+      setErrores((x) => ({ ...x, whatsapp: 'Escribe un número de celular válido, por ejemplo 300 123 4567' }))
+      return
+    }
+    setErrores((x) => ({ ...x, sitioWeb: undefined, whatsapp: undefined }))
+    setF((x) => ({ ...x, sitioWeb: sitio }))
+    setGuardado(JSON.stringify({ ...f, sitioWeb: sitio }))
     const hayContacto = f.telefono.trim() || f.whatsapp.trim()
     const sinPublicar = [f.telefono.trim() && !f.publicarTelefono ? 'teléfono' : '', f.whatsapp.trim() && !f.publicarWhatsapp ? 'WhatsApp' : ''].filter(Boolean)
     setAvisoContacto(
@@ -38,6 +79,8 @@ function FormularioFicha({ s }: { s: Semillero }) {
       descripcion: f.descripcion.trim(),
       linea: f.linea.trim(),
       requisitos: f.requisitos.trim(),
+      sitioWeb: sitio || undefined,
+      logo: f.logo || undefined,
       director: { ...s.director, nombre: f.directorNombre.trim() },
       contacto: hayContacto
         ? {
@@ -67,7 +110,29 @@ function FormularioFicha({ s }: { s: Semillero }) {
       </Campo>
 
       <fieldset className="rounded border p-4">
-        <legend className="section-title px-1 text-xs">Contacto opcional</legend>
+        <legend className="px-1 text-lg font-semibold">Identidad y página web (opcional)</legend>
+        <div className="space-y-4">
+          <Campo label="Página web del semillero" htmlFor="e-web" error={errores.sitioWeb} hint="Si el semillero tiene sitio propio, escribe su dirección. Ej.: https://mi-semillero.unal.edu.co">
+            <input id="e-web" type="text" inputMode="url" autoComplete="url" className="input" value={f.sitioWeb} onChange={(e) => setF({ ...f, sitioWeb: e.target.value })} />
+          </Campo>
+          <Campo label="Logo del semillero" htmlFor="e-logo" error={errores.logo} hint="PNG, JPG o WebP de hasta 2 MB. Se ajusta automáticamente a un tamaño pequeño.">
+            <div className="flex flex-wrap items-center gap-4">
+              {f.logo ? (
+                <img src={f.logo} alt={`Logo actual de ${s.nombre}`} className="h-20 w-20 rounded border bg-white object-contain p-1" />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded border border-dashed text-center text-xs text-unal-gris-oscuro">Sin logo</div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <input id="e-logo" type="file" accept="image/png,image/jpeg,image/webp" onChange={elegirLogo} className="text-sm" />
+                {f.logo && <button type="button" className="btn-outline" onClick={() => setF({ ...f, logo: '' })}>Quitar logo</button>}
+              </div>
+            </div>
+          </Campo>
+        </div>
+      </fieldset>
+
+      <fieldset className="rounded border p-4">
+        <legend className="px-1 text-lg font-semibold">Contacto opcional</legend>
         <p className="mb-3 text-xs text-unal-gris-oscuro">Teléfono y WhatsApp solo se publican si lo autorizas expresamente para cada dato.</p>
         <div className="space-y-4">
           <div>
@@ -80,7 +145,9 @@ function FormularioFicha({ s }: { s: Semillero }) {
           </div>
           <div>
             <label htmlFor="e-wa" className="label">WhatsApp</label>
-            <input id="e-wa" className="input" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value, publicarWhatsapp: false })} />
+            <p className="mb-1 text-sm text-unal-gris-oscuro">Si lo publicas, en la ficha aparecerá un botón «Escribir por WhatsApp» que abre la conversación con este número.</p>
+            <input id="e-wa" inputMode="tel" className="input" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value, publicarWhatsapp: false })} />
+            {errores.whatsapp && <p role="alert" className="mt-1 text-sm font-semibold text-unal-rojo">{errores.whatsapp}</p>}
             <label className="mt-2 flex items-center gap-2 text-sm">
               <input type="checkbox" className="h-4 w-4 accent-unal-verde-oscuro" checked={f.publicarWhatsapp} disabled={!f.whatsapp.trim()} onChange={(e) => setF({ ...f, publicarWhatsapp: e.target.checked })} />
               Autorizo publicar este dato
@@ -89,7 +156,11 @@ function FormularioFicha({ s }: { s: Semillero }) {
         </div>
       </fieldset>
       {avisoContacto && <Alerta tono="info">{avisoContacto}</Alerta>}
-      <div className="flex justify-end"><button type="submit" className="btn-primary">Guardar cambios</button></div>
+      <div className="flex justify-end gap-2">
+        <Link to={`/semilleros/${s.id}`} className="btn-outline">Cancelar</Link>
+        <button type="submit" className="btn-primary">Guardar cambios</button>
+      </div>
+      {aviso}
     </form>
   )
 }

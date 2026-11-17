@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { CalendarClock, Users } from 'lucide-react'
+import { ArrowLeft, CalendarClock, MessageCircle, Users } from 'lucide-react'
 import { useStore } from '../store'
-import { convocatoriaAbierta, cuposDisponibles, fmtFecha } from '../lib/utils'
+import { convocatoriaAbierta, cuposDisponibles, enlaceWhatsApp, fmtFecha } from '../lib/utils'
 import { Alerta, HU } from '../components/UI'
 import { BadgeConvocatoria, SelloFicha, TarjetaSemillero } from '../components/Semillero'
 import NoPermiso from '../components/NoPermiso'
@@ -9,7 +9,7 @@ import NoPermiso from '../components/NoPermiso'
 function Dato({ etiqueta, children, hu }: { etiqueta: string; children: React.ReactNode; hu?: string }) {
   return (
     <div className="border-b border-unal-gris-claro/50 py-3 sm:grid sm:grid-cols-[14rem_1fr] sm:gap-4">
-      <dt className="text-xs font-bold uppercase tracking-[0.14em] text-unal-gris-oscuro">
+      <dt className="text-sm font-semibold text-unal-gris-oscuro">
         {etiqueta}
         {hu && <HU id={hu} />}
       </dt>
@@ -30,6 +30,8 @@ export default function Ficha() {
   if (!s) return <NoPermiso mensaje="No encontramos este semillero" />
 
   const abierta = convocatoriaAbierta(s)
+  // Si se llegó desde una búsqueda, se vuelve a ella con sus filtros y página
+  const volverA = (location.state as { desde?: string } | null)?.desde ?? '/'
   const esDirectorPropio = role === 'director' && sesion?.semilleroId === s.id
   const puedePostular = role === 'visitante' || role === 'estudiante'
   const relacionados = semilleros.filter((x) => x.area === s.area && x.id !== s.id).slice(0, 4)
@@ -44,8 +46,11 @@ export default function Ficha() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
+      <Link to={volverA} className="btn-outline mb-4">
+        <ArrowLeft size={18} aria-hidden /> {volverA === '/' ? 'Volver a explorar' : 'Volver a los resultados'}
+      </Link>
       <nav aria-label="Ruta de navegación" className="mb-4 text-sm text-unal-gris-oscuro">
-        <Link to="/" className="hover:underline">Explorar</Link> <span aria-hidden>›</span> <span className="font-semibold text-unal-texto">{s.nombre}</span>
+        <Link to={volverA} className="hover:underline">Explorar</Link> <span aria-hidden>›</span> <span className="font-semibold text-unal-texto">{s.nombre}</span>
       </nav>
 
       {(location.state as { aviso?: string } | null)?.aviso === 'cerrada' && (
@@ -53,7 +58,10 @@ export default function Ficha() {
       )}
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">{s.nombre}</h1>
+        <div className="flex items-center gap-4">
+          {s.logo && <img src={s.logo} alt={`Logo de ${s.nombre}`} className="h-16 w-16 shrink-0 rounded border bg-white object-contain p-1" />}
+          <h1 className="text-3xl font-bold leading-tight">{s.nombre}</h1>
+        </div>
         <div className="mt-2 h-1 w-14 bg-unal-verde" />
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <SelloFicha s={s} />
@@ -80,14 +88,35 @@ export default function Ficha() {
                 </span>
               )}
             </Dato>
+            <Dato etiqueta="Página web">
+              {s.sitioWeb ? (
+                <a className="break-all font-semibold text-unal-verde-oscuro underline" href={s.sitioWeb} target="_blank" rel="noopener noreferrer">
+                  {s.sitioWeb.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  <span className="sr-only"> (se abre en una pestaña nueva)</span>
+                </a>
+              ) : (
+                <span className="italic text-unal-gris-oscuro">Este semillero no tiene página web registrada</span>
+              )}
+            </Dato>
             <Dato etiqueta="Estado de convocatoria"><BadgeConvocatoria s={s} /></Dato>
           </dl>
 
           {(tel || wa) && (
             <div className="mt-5 rounded bg-unal-fondo p-4 text-sm">
-              <p className="section-title mb-1 text-xs">Contacto confirmado por el director</p>
+              <p className="mb-1 text-lg font-semibold">Contacto confirmado por el director</p>
               {tel && <p>Teléfono: <span className="font-semibold">{tel}</span></p>}
               {wa && <p>WhatsApp: <span className="font-semibold">{wa}</span></p>}
+              {wa && enlaceWhatsApp(wa, `Hola, vi el semillero «${s.nombre}» en Atlas y quisiera más información.`) && (
+                <a
+                  href={enlaceWhatsApp(wa, `Hola, vi el semillero «${s.nombre}» en Atlas y quisiera más información.`)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary mt-3"
+                >
+                  <MessageCircle size={18} aria-hidden /> Escribir por WhatsApp
+                  <span className="sr-only"> (se abre en una pestaña nueva)</span>
+                </a>
+              )}
             </div>
           )}
 

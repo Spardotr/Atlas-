@@ -120,7 +120,7 @@ export default function Explorar() {
                 actualizar({ q: e.target.value })
               }}
               placeholder="Ej.: robótica, energía, datos…"
-              className="input pl-10 pr-10 py-3 text-base"
+              className="input pl-10 pr-10 py-3 text-base [&::-webkit-search-cancel-button]:appearance-none"
             />
             {/* P01: botón para borrar la búsqueda anterior y empezar de nuevo */}
             {texto !== '' && (

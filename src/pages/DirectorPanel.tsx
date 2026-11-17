@@ -25,9 +25,9 @@ export default function DirectorPanel() {
           <h2 id="c-ficha" className="section-title mb-3 flex items-center gap-2"><FileEdit size={16} /> Mi ficha</h2>
           <SelloFicha s={s} />
           <p className="mt-3 text-sm text-unal-gris-oscuro">
-            {s.estadoFicha === 'Precargada' ? 'Tu ficha fue precargada desde Hermes. Revísala y confírmala.' : 'Tu ficha está confirmada.'}
+            {s.estadoFicha === 'Precargada' ? 'Tu ficha fue precargada desde Hermes. Revísala y verifícala.' : 'Tu ficha está verificada.'}
           </p>
-          <Link to="/director/ficha" className="btn-primary mt-4 w-full">{s.estadoFicha === 'Precargada' ? 'Reclamar ficha' : 'Editar ficha'}</Link>
+          <Link to="/director/ficha" className="btn-primary mt-4 w-full">{s.estadoFicha === 'Precargada' ? 'Verificar mi ficha' : 'Editar ficha'}</Link>
         </section>
 
         <section className="card" aria-labelledby="c-conv">

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { useStore } from '../store'
 import { AREAS } from '../types'
 import { comparaAlfabetico, normalizar } from '../lib/utils'
@@ -16,6 +16,7 @@ export default function Explorar() {
   const area = params.get('area') ?? ''
   const [texto, setTexto] = useState(q)
   const [pagina, setPagina] = useState(1)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => setTexto(q), [q])
   useEffect(() => setPagina(1), [q, area])
@@ -34,9 +35,18 @@ export default function Explorar() {
     return ordenados.filter((s) => {
       if (area && s.area !== area) return false
       if (!nq) return true
-      return normalizar(`${s.nombre} ${s.descripcion} ${s.linea}`).includes(nq)
+      // P08: el área temática también cuenta como texto de búsqueda («bioingeniería» encuentra los semilleros del área).
+      return normalizar(`${s.nombre} ${s.descripcion} ${s.linea} ${s.area}`).includes(nq)
     })
   }, [ordenados, q, area])
+
+  // P08: si no hay coincidencias exactas, sugerir semilleros afines por coincidencia parcial de cada palabra (primeras 5 letras).
+  const sugeridos = useMemo(() => {
+    if (filtrados.length > 0) return []
+    const tokens = normalizar(q).split(/\s+/).filter((t) => t.length >= 4).map((t) => t.slice(0, 5))
+    if (tokens.length === 0) return []
+    return ordenados.filter((s) => tokens.some((t) => normalizar(`${s.nombre} ${s.area} ${s.linea}`).includes(t))).slice(0, 4)
+  }, [filtrados.length, ordenados, q])
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA))
   const pag = Math.min(pagina, totalPaginas)
@@ -80,6 +90,7 @@ export default function Explorar() {
             <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-unal-gris-oscuro" />
             <input
               id="buscador"
+              ref={inputRef}
               type="search"
               value={texto}
               onChange={(e) => {
@@ -87,8 +98,23 @@ export default function Explorar() {
                 actualizar({ q: e.target.value })
               }}
               placeholder="Ej.: robótica, energía, datos…"
-              className="input pl-10 py-3 text-base"
+              className="input pl-10 pr-10 py-3 text-base"
             />
+            {/* P01: botón para borrar la búsqueda anterior y empezar de nuevo */}
+            {texto !== '' && (
+              <button
+                type="button"
+                aria-label="Borrar búsqueda"
+                onClick={() => {
+                  setTexto('')
+                  actualizar({ q: '' })
+                  inputRef.current?.focus()
+                }}
+                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded text-unal-gris-oscuro hover:bg-gray-100"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
           <button className="btn-primary px-6" type="submit">
             Buscar
@@ -110,6 +136,24 @@ export default function Explorar() {
         </div>
       </form>
 
+      {/* P03: los filtros se combinan; esta fila lo hace visible y permite quitar cada uno por separado */}
+      {(q || area) && (
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm" aria-label="Filtros activos">
+          <span className="font-semibold">Filtros activos:</span>
+          {q && (
+            <button type="button" onClick={() => { setTexto(''); actualizar({ q: '' }) }} aria-label={`Quitar palabra clave «${q}»`} className="inline-flex items-center gap-1 rounded border border-unal-verde-oscuro bg-white px-2 py-0.5">
+              «{q}» <X size={14} aria-hidden />
+            </button>
+          )}
+          {area && (
+            <button type="button" onClick={() => actualizar({ area: '' })} aria-label={`Quitar área «${area}»`} className="inline-flex items-center gap-1 rounded border border-unal-verde-oscuro bg-white px-2 py-0.5">
+              {area} <X size={14} aria-hidden />
+            </button>
+          )}
+          {q && area && <span className="text-unal-gris-oscuro">(se aplican los dos a la vez)</span>}
+        </div>
+      )}
+
       <div className="mt-6 flex items-center justify-between text-sm text-unal-gris-oscuro" aria-live="polite">
         <p data-testid="contador">
           {filtrados.length === 0
@@ -124,6 +168,25 @@ export default function Explorar() {
           <p className="text-lg font-semibold">
             No encontramos semilleros para «{q || area}»
           </p>
+          {/* P08: sugerencias afines y áreas disponibles en lugar de una pantalla vacía */}
+          {sugeridos.length > 0 && (
+            <div className="mt-4 text-left">
+              <p className="text-sm font-semibold">Quizás te interesen estos semilleros relacionados:</p>
+              <ul className="mt-2 grid gap-3 sm:grid-cols-2">
+                {sugeridos.map((s) => (
+                  <li key={s.id}><TarjetaSemillero s={s} q="" /></li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="mt-4 text-sm">O explora por área temática:</p>
+          <div className="mt-2 flex flex-wrap justify-center gap-2">
+            {AREAS.map((a) => (
+              <button key={a} type="button" onClick={() => { setTexto(''); actualizar({ q: '', area: a }) }} className="rounded border border-unal-gris-claro bg-white px-3 py-1 text-sm hover:bg-gray-50">
+                {a}
+              </button>
+            ))}
+          </div>
           <button
             className="btn-primary mt-4"
             onClick={() => {

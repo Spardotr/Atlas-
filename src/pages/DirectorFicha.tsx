@@ -22,9 +22,18 @@ function FormularioFicha({ s }: { s: Semillero }) {
     publicarWhatsapp: s.contacto?.publicarWhatsapp ?? false,
   })
 
+  // P05: aviso explícito cuando se guarda un contacto que aún no se publica
+  const [avisoContacto, setAvisoContacto] = useState('')
+
   const guardar = (e: React.FormEvent) => {
     e.preventDefault()
     const hayContacto = f.telefono.trim() || f.whatsapp.trim()
+    const sinPublicar = [f.telefono.trim() && !f.publicarTelefono ? 'teléfono' : '', f.whatsapp.trim() && !f.publicarWhatsapp ? 'WhatsApp' : ''].filter(Boolean)
+    setAvisoContacto(
+      sinPublicar.length
+        ? `Cambios guardados. El ${sinPublicar.join(' y el ')} quedó registrado pero no se muestra en la ficha pública: marca «Autorizo publicar este dato» si quieres que aparezca.`
+        : '',
+    )
     actualizarSemillero(s.id, {
       descripcion: f.descripcion.trim(),
       linea: f.linea.trim(),
@@ -79,6 +88,7 @@ function FormularioFicha({ s }: { s: Semillero }) {
           </div>
         </div>
       </fieldset>
+      {avisoContacto && <Alerta tono="info">{avisoContacto}</Alerta>}
       <div className="flex justify-end"><button type="submit" className="btn-primary">Guardar cambios</button></div>
     </form>
   )
@@ -100,11 +110,11 @@ export default function DirectorFicha() {
     if (s.estadoFicha === 'Precargada' && role !== 'vicedecanatura') {
       return (
         <div className="mx-auto max-w-2xl px-4 py-10">
-          <PageTitle hu={['HU-29']}>Reclamar ficha</PageTitle>
+          <PageTitle hu={['HU-29']}>Verificar ficha</PageTitle>
           <Alerta tono="error">
             <p className="font-semibold">Tu correo no coincide con el del director de esta ficha.</p>
             <p className="mt-2 text-unal-texto">
-              Solo el director registrado puede reclamarla. Si crees que hay un error, pide la corrección a la Vicedecanatura de Investigación y Extensión indicando el semillero «{s.nombre}» y tu correo institucional ({sesion.correo}).
+              Solo el director registrado puede verificarla. Si crees que hay un error, pide la corrección a la Vicedecanatura de Investigación y Extensión indicando el semillero «{s.nombre}» y tu correo institucional ({sesion.correo}).
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <a className="btn-primary" href={`mailto:${CORREO_VICE}?subject=${encodeURIComponent(`Corrección de ficha: ${s.nombre}`)}`}>Escribir a la Vicedecanatura</a>
@@ -125,8 +135,8 @@ export default function DirectorFicha() {
       {s.estadoFicha === 'Precargada' && (
         <div className="mb-6">
           <Alerta>
-            <p className="font-semibold">Esta ficha fue precargada desde Hermes. Revísala y confírmala.</p>
-            <button className="btn-primary mt-3" onClick={() => { setConfirmo(false); setReclamando(true) }}>Reclamar ficha</button>
+            <p className="font-semibold">Esta ficha fue precargada desde Hermes. Revísala y verifícala para que aparezca como «Verificada» en el catálogo.</p>
+            <button className="btn-primary mt-3" onClick={() => { setConfirmo(false); setReclamando(true) }}>Verificar mi ficha</button>
           </Alerta>
         </div>
       )}
@@ -135,12 +145,12 @@ export default function DirectorFicha() {
 
       {reclamando && (
         <Dialog
-          titulo="Reclamar ficha"
+          titulo="Verificar mi ficha"
           onClose={() => setReclamando(false)}
           acciones={
             <>
               <button className="btn-outline" onClick={() => setReclamando(false)}>Cancelar</button>
-              <button className="btn-primary" disabled={!confirmo} onClick={() => { reclamarFicha(s.id); setReclamando(false) }}>Confirmar y reclamar</button>
+              <button className="btn-primary" disabled={!confirmo} onClick={() => { reclamarFicha(s.id); setReclamando(false) }}>Confirmar y verificar</button>
             </>
           }
         >

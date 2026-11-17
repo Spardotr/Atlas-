@@ -198,12 +198,12 @@ describe('E6 · Director (HU-09, HU-29, HU-30, HU-32)', () => {
     renderApp('/')
     await entrarComoDirector(user)
     expect(await screen.findByRole('heading', { name: /Mi semillero/ })).toBeInTheDocument()
-    await user.click(screen.getByRole('link', { name: 'Reclamar ficha' }))
-    await user.click(screen.getByRole('button', { name: 'Reclamar ficha' }))
+    await user.click(screen.getByRole('link', { name: 'Verificar mi ficha' }))
+    await user.click(screen.getByRole('button', { name: 'Verificar mi ficha' }))
     const dlg = screen.getByRole('dialog')
-    expect(within(dlg).getByRole('button', { name: 'Confirmar y reclamar' })).toBeDisabled()
+    expect(within(dlg).getByRole('button', { name: 'Confirmar y verificar' })).toBeDisabled()
     await user.click(within(dlg).getByLabelText('Confirmo que la información es correcta'))
-    await user.click(within(dlg).getByRole('button', { name: 'Confirmar y reclamar' }))
+    await user.click(within(dlg).getByRole('button', { name: 'Confirmar y verificar' }))
     expect(await screen.findByText('Verificada')).toBeInTheDocument()
 
     // HU-30: teléfono nuevo no se publica sin autorización

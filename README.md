@@ -582,3 +582,58 @@ Si la universidad habilita el acceso a datos oficiales, por ejemplo para confirm
 <img width="1520" height="1008" alt="official-data-flow" src="https://github.com/user-attachments/assets/2d438c0b-622a-456a-9936-a91aacfd53f1" />
 
 Solo se acude a la fuente cuando la copia local venció. Si la fuente no responde, se usa la última copia disponible; si nunca hubo una, se aplica la regla actual, que deduce el rol a partir del correo registrado en la ficha
+
+## Informe de uso de IA
+
+El equipo usó Claude (Anthropic) como asistente durante el Hito 2, conectado a Jira y a Figma mediante el protocolo MCP (Model Context Protocol). 
+
+### Herramientas y conexiones
+
+| Conexión | Para qué se usó | Limitación encontrada |
+| --- | --- | --- |
+| Jira (MCP de Atlassian) | Crear el proyecto, las épicas, las historias, los vínculos de dependencia y las fechas | No permite borrar vínculos ni renombrar el proyecto; esas dos acciones se hicieron desde el navegador con la sesión de un integrante |
+| Figma (MCP oficial) | Leer el archivo del mockup, reutilizar las variables de color y crear vistas y componentes | El plan Starter agotó su cuota de llamadas dos veces; parte del trabajo quedó sin aplicar |
+| Documentos de Claude | Redactar e iterar el Módulo IV | Los diagramas no se exportan a Markdown; se generaron como imágenes para el README |
+
+### Caso 1. Sincronización de Jira por MCP
+
+**Prompt inicial.** "Aplica estos cambios: renombra el proyecto a Atlas, sincroniza el ambiente de Jira con lo que tenemos ahora en el documento del backlog y agrega las dependencias. Ajusta los vínculos 'bloquea' y reprograma las fechas según el nuevo cronograma."
+
+**Resultado de la IA.** El proyecto quedó con 7 épicas, las historias renombradas con sus identificadores definitivos, 45 vínculos "bloquea" y fechas por historia del MVP.
+
+**Refactorización humana.**
+
+- Jira no admitió las features como nivel padre de las historias; el equipo aceptó representarlas como etiquetas.
+- Se corrigió el cronograma: la IA había interpretado mal las fechas; el equipo fijó el inicio el 19 de octubre y el cierre en la primera semana de diciembre.
+- La IA entendió al revés una instrucción y modificó el documento para igualarlo a Jira. El equipo aclaró que el documento es la fuente de verdad; la IA revirtió el cambio y ajustó Jira.
+- Las etiquetas de entrega (R1, R2, R3) se reemplazaron por una sola etiqueta MVP, que es la clasificación que usa el documento.
+
+### Caso 2. Mockup en Figma
+
+**Prompt inicial.** "Usa el MCP de Figma para agregar más vistas al mockup de Atlas, basadas en las historias de usuario obligatorias, y aplica el estilo institucional de la universidad que aparece en esta captura." Se adjuntó la captura del encabezado del sitio de la universidad.
+
+**Resultado de la IA.** Siete vistas nuevas en el archivo de Figma, una por cada grupo de historias obligatorias, enlazadas a las variables de color del archivo, y un componente reutilizable con el encabezado institucional.
+
+**Refactorización humana.**
+
+- En un intento anterior Figma bloqueó el acceso por cuota y la IA produjo vistas genéricas, en formato móvil, sin haber visto el avance del equipo. El equipo compartió una captura del mockup real, de escritorio y con la paleta verde institucional, y las vistas se rehicieron en ese estilo.
+- El escudo de la universidad quedó como marcador: lo inserta el equipo desde el manual de marca.
+- Se pidió un pie de página y ajustar las vistas al sistema de diseño de Google (Material 3). No se aplicó porque la cuota se agotó de nuevo; queda como trabajo manual.
+
+### Caso 3. Arquitectura y persistencia (Módulo IV)
+
+**Prompt inicial.** "Para el Módulo IV, que pide el esquema de datos mínimo y el mapa de API, pensamos en un backend dividido por capas de dominio. No creemos necesaria por ahora una arquitectura de microservicios ni hexagonal: no se estiman más de 100 usuarios concurrentes, que caben en una sola máquina, y si el sistema escala debe poder separarse fácilmente en microservicios. La base de datos sería relacional, en PostgreSQL, normalizada y con algunos campos JSON para lo no estructurado. Habría dos ambientes, uno de pruebas y otro de UAT. Ayúdanos a formalizar de manera robusta esta arquitectura, justificando las decisiones, con base en las historias de usuario."
+
+**Resultado de la IA.** Un documento de ocho secciones con monolito modular, diagrama entidad-relación y mapa de API. Incluía supuestos propios de la IA: despliegue en AWS, inicio de sesión por enlace al correo e identificadores en español.
+
+**Refactorización humana.**
+
+- Código, tablas y rutas en inglés; el texto en español.
+- Diseño independiente de la nube, porque no hay garantía de una cuenta de AWS institucional.
+- Inicio de sesión con la cuenta de Google de la universidad, que el equipo validó con una prueba de concepto, en lugar del enlace por correo.
+- Sin conexión directa a Hermes: las fichas se cargan por archivo. Las tablas sí incorporan los campos que Hermes registra, para extender el sistema sin migraciones.
+- Interoperabilidad con fuentes oficiales como lógica de servicio y no como columnas en las tablas, y fuera del MVP.
+- Se pidió agregar los principios SOLID, la estructura de carpetas, el esquema estrella con historial de cambios y la justificación de PATCH frente a PUT.
+- Redacción: la primera versión era demasiado extensa y la segunda demasiado coloquial; se ajustó a un registro formal y breve.
+
+
